@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="/assets/logo.png" />
+  <title>Dashboard – GastosApp</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="css/design-tokens.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/dashboard.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+</head>
+<body class="dashboard-grid-shell" data-page="dashboard">
+  <div id="sidebar-slot" class="left-sidebar"></div>
+
+  <div class="overlay hidden" id="overlay"></div>
+
+  <main class="main-panel page-stack">
+    <header class="page-header glass-card">
+      <div>
+        <h1 class="page-title">Gestor de Gastos Pro Dashboard</h1>
+        <p class="page-subtitle" id="greeting">Resumen operativo de clientes y finanzas</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-ghost btn-sm" type="button" aria-label="Notificaciones">Notificaciones</button>
+        <button class="btn btn-primary" type="button">+ Agregar contacto</button>
+      </div>
+    </header>
+
+    <div class="page-content">
+      <section class="cards-grid">
+        <div class="stat-card">
+          <div class="stat-card-body">
+            <span class="stat-label">Gasto este mes</span>
+            <span class="stat-value" id="stat-month-total">-</span>
+            <span class="stat-badge" id="stat-month-growth"></span>
+          </div>
+        </div>
+        <div class="stat-card">
+         
+          <div class="stat-card-body">
+            <span class="stat-label">Gastos registrados</span>
+            <span class="stat-value" id="stat-count">-</span>
+          </div>
+        </div>
+        <div class="stat-card">
+     
+          <div class="stat-card-body">
+            <span class="stat-label">Gasto promedio</span>
+            <span class="stat-value" id="stat-avg">-</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-body">
+            <span class="stat-label">Comercio top</span>
+            <span class="stat-value stat-value--sm" id="stat-top-merchant">-</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3 class="chart-title">Gastos por categoría</h3>
+          </div>
+          <div class="chart-body">
+            <canvas id="chart-category"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card chart-card--wide">
+          <div class="chart-header">
+            <h3 class="chart-title">Evolución mensual (últimos 6 meses)</h3>
+          </div>
+          <div class="chart-body">
+            <canvas id="chart-monthly"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3 class="chart-title">Ranking de comercios</h3>
+          </div>
+          <div class="merchant-list" id="merchant-list">
+            <div class="empty-state-sm">Cargando...</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="crm-content-grid">
+        <article class="card">
+          <div class="section-header">
+            <h3 class="card-title">Recent Contacts</h3>
+            <div>
+              <button class="btn btn-ghost btn-sm">Filtrar</button>
+              <button class="btn btn-ghost btn-sm">Export</button>
+            </div>
+          </div>
+          <div class="crm-list" id="crm-contact-list"></div>
+        </article>
+
+        <article class="card">
+          <h3 class="card-title">Sales Target</h3>
+          <div class="target-item">
+            <div class="target-row">
+              <span>Monthly target</span>
+              <span>74%</span>
+            </div>
+            <div class="progress-bar-wrapper"><div class="progress-bar" style="width:74%"></div></div>
+          </div>
+          <div class="target-item">
+            <div class="target-row">
+              <span>Quarterly target</span>
+              <span>58%</span>
+            </div>
+            <div class="progress-bar-wrapper"><div class="progress-bar" style="width:58%"></div></div>
+          </div>
+          <div class="target-item">
+            <div class="target-row">
+              <span>Team A</span>
+              <span>81%</span>
+            </div>
+            <div class="progress-bar-wrapper"><div class="progress-bar" style="width:81%"></div></div>
+          </div>
+          <p class="text-muted">12 días restantes para cierre mensual</p>
+        </article>
+      </section>
+
+      <section class="section">
+        <div class="section-header">
+          <h2 class="section-title">Recomendaciones</h2>
+        </div>
+        <div id="recommendations-list" class="recommendations-list">
+          <div class="empty-state-sm">Cargando recomendaciones...</div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-header">
+          <h2 class="section-title">Últimos gastos</h2>
+          <a href="expenses.html" class="btn btn-ghost btn-sm">Ver todos</a>
+        </div>
+        <div class="table-wrapper">
+          <table class="table" id="recent-expenses-table">
+            <thead>
+              <tr>
+                <th>Comercio</th>
+                <th>Categoría</th>
+                <th>Fecha</th>
+                <th class="text-right">Monto</th>
+              </tr>
+            </thead>
+            <tbody id="recent-expenses-body">
+              <tr><td colspan="4" class="table-empty">Cargando...</td></tr>
+            </tbody>
+          </table>
+        
+  </main>
+
+  <aside class="right-sidebar glass-card">
+    <div class="right-sidebar-stack">
+
+      <!-- 1. Acciones Rápidas -->
+      <section>
+        <h4 class="sidebar-section-title">Acciones Rápidas</h4>
+        <div class="quick-actions">
+          <button class="btn btn-primary action-btn" id="rs-btn-new-expense" onclick="Expenses && Expenses.init ? document.getElementById('btn-new-expense') && document.getElementById('btn-new-expense').click() : (window.location='expenses.html')">
+            <svg viewBox="0 0 24 24" class="action-btn-icon" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+            Nuevo Gasto
+          </button>
+          <button class="btn btn-ghost action-btn" onclick="window.location='upload-ticket.html'">
+            <svg viewBox="0 0 24 24" class="action-btn-icon" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Escanear Ticket
+          </button>
+          <button class="btn btn-ghost action-btn" onclick="window.location='expenses.html'">
+            <svg viewBox="0 0 24 24" class="action-btn-icon" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            Ver Gastos
+          </button>
+        </div>
+      </section>
+
+      <!-- 2. Últimos Movimientos -->
+      <section>
+        <h4 class="sidebar-section-title">Últimos Movimientos</h4>
+        <div class="activity-feed" id="recent-movements">
+          <div class="movement-item">
+            <span class="movement-icon movement-icon--food">🛒</span>
+            <div class="movement-info">
+              <span class="movement-name">Cargando...</span>
+              <span class="movement-time">—</span>
+            </div>
+            <span class="movement-amount">—</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Smart Insights -->
+      <section>
+        <h4 class="sidebar-section-title">Smart Insights</h4>
+        <div class="insights-list" id="insights-list">
+          <div class="insight-card insight-card--info">
+            <span class="insight-icon">💡</span>
+            <p class="insight-text">Cargando análisis financiero...</p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </aside>
+
+  <!-- Unusual expenses alert modal -->
+  <div class="modal hidden" id="unusual-modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Alertas de gasto inusual</h3>
+        <button class="modal-close" id="unusual-modal-close">✕</button>
+      </div>
+      <div class="modal-body" id="unusual-modal-body"></div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" id="unusual-modal-ok">Entendido</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/components.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script>
+    (async () => {
+      await UIComponents.loadSidebar('sidebar-slot', 'dashboard');
+
+      UIComponents.renderContactRows('crm-contact-list', [
+        { name: 'Sofia Martinez', company: 'Northwind', value: '$12.400', status: 'Activo' },
+        { name: 'Diego Rivas', company: 'Apex Labs', value: '$8.950', status: 'Prospect' },
+        { name: 'Laura Gomez', company: 'Vertex Group', value: '$15.120', status: 'Activo' },
+        { name: 'Martin Acosta', company: 'BlueStone', value: '$6.300', status: 'Prospect' }
+      ]);
+
+      UIComponents.renderActivity('activity-feed', [
+        { title: 'Nuevo contacto asignado a SDR', time: 'Hace 12 min', type: 'Info' },
+        { title: 'Seguimiento enviado a Northwind', time: 'Hace 35 min', type: 'Task' },
+        { title: 'Deal marcado como Won', time: 'Hace 1 h', type: 'Deal' }
+      ]);
+
+      UIComponents.renderPerformers('top-performers', [
+        { name: 'Ana Torres', region: 'LATAM', value: '$42.8k' },
+        { name: 'Jorge Diaz', region: 'EMEA', value: '$39.2k' },
+        { name: 'Lucia Perez', region: 'NA', value: '$34.6k' }
+      ]);
+
+      Auth.requireAuth();
+      Dashboard.init();
+    })();
+  </script>
+</body>
+</html>

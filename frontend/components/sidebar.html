@@ -1,0 +1,35 @@
+<aside class="sidebar glass-card left-sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <span class="sidebar-logo">
+      <img src="/assets/logo.png" alt="Logo GastosApp" class="sidebar-logo-img" />
+    </span>
+    <span class="sidebar-brand">GastosApp</span>
+    <button class="sidebar-close" id="sidebar-close" aria-label="Cerrar menu">X</button>
+  </div>
+
+  <nav class="sidebar-nav" role="navigation" aria-label="Menu principal">
+    <a href="dashboard.html" class="nav-link" data-page="dashboard" aria-current="page">
+      <span class="nav-icon">1</span><span>Dashboard</span>
+    </a>
+    <a href="expenses.html" class="nav-link" data-page="expenses">
+      <span class="nav-icon">2</span><span>Mis gastos</span>
+    </a>
+    <a href="upload-ticket.html" class="nav-link" data-page="tickets">
+      <span class="nav-icon">3</span><span>Subir ticket</span>
+    </a>
+    <a href="advisor.html" class="nav-link advisor-only hidden" data-page="advisor">
+      <span class="nav-icon">4</span><span>Panel asesor</span>
+    </a>
+    <a href="profile.html" class="nav-link" data-page="profile">
+      <span class="nav-icon">5</span><span>Mi perfil</span>
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="user-info" id="sidebar-user" title="Mi perfil" style="cursor:pointer">
+      <div class="user-avatar" id="user-avatar-initials">JD</div>
+      <div class="user-name" id="sidebar-user-name">Cargando...</div>
+    </div>
+    <button class="btn btn-ghost btn-sm" id="logout-btn">Salir</button>
+  </div>
+</aside>

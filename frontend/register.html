@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="/assets/logo.png" />
+  <title>Crear cuenta – GastosApp</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="css/design-tokens.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/dashboard.css" />
+</head>
+<body class="auth-page">
+
+  <div class="auth-split">
+
+    <!-- ── Left: Branding panel ─────────────────────────── -->
+    <div class="auth-brand-panel">
+      <div class="auth-brand-content">
+        <div class="auth-logo-mark">GA</div>
+        <h1 class="auth-brand-title">Tu control
+financiero
+empieza hoy</h1>
+        <p class="auth-brand-subtitle">
+          Uníse gratis y empezá a entender dónde va tu dinero.
+          Sin configuraciones complicadas.
+        </p>
+        <ul class="auth-features">
+          <li>
+            <span class="auth-feature-icon"></span>
+            <span>Alta instantánea, sin tarjeta de crédito</span>
+          </li>
+          <li>
+            <span class="auth-feature-icon"></span>
+            <span>Tus datos seguros y cifrados</span>
+          </li>
+          <li>
+            <span class="auth-feature-icon"></span>
+            <span>Analíticas en tiempo real desde el primer día</span>
+          </li>
+          <li>
+            <span class="auth-feature-icon"></span>
+            <span>Asesoramiento financiero personalizado</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ── Right: Form panel ─────────────────────────────── -->
+    <div class="auth-form-panel">
+      <div class="auth-form-inner">
+
+        <div class="auth-form-header">
+          <div class="auth-form-logo">
+            <div class="auth-form-logo-icon">GA</div>
+            <span class="auth-form-logo-name">GastosApp</span>
+          </div>
+          <h2 class="auth-form-title">Crear cuenta gratis</h2>
+          <p class="auth-form-subtitle">Completá el formulario para registrarte</p>
+        </div>
+
+        <div id="register-alert" class="alert hidden"></div>
+
+        <form id="register-form" novalidate>
+          <div class="form-group">
+            <label for="name" class="form-label">Nombre completo</label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              class="form-input"
+              placeholder="Juan Pérez"
+              autocomplete="name"
+              required
+            />
+            <span class="form-error" id="name-error"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="email" class="form-label">Correo electrónico</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              class="form-input"
+              placeholder="tu@email.com"
+              autocomplete="email"
+              required
+            />
+            <span class="form-error" id="email-error"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="password" class="form-label">Contraseña</label>
+            <div class="input-wrapper">
+              <input
+                type="password"
+                id="password"
+                name="password"
+                class="form-input"
+                placeholder="Mínimo 6 caracteres"
+                autocomplete="new-password"
+                required
+                minlength="6"
+              />
+              <button type="button" class="toggle-password" aria-label="Mostrar/ocultar contraseña">👁</button>
+            </div>
+            <div class="password-strength" id="password-strength"></div>
+            <span class="form-error" id="password-error"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="confirm-password" class="form-label">Confirmar contraseña</label>
+            <input
+              type="password"
+              id="confirm-password"
+              name="confirmPassword"
+              class="form-input"
+              placeholder="Repetí tu contraseña"
+              autocomplete="new-password"
+              required
+            />
+            <span class="form-error" id="confirm-password-error"></span>
+          </div>
+
+          <button type="submit" id="register-btn" class="btn btn-primary btn-full" style="margin-top:4px">
+            <span class="btn-text">Crear cuenta</span>
+            <span class="btn-spinner hidden">⏳</span>
+          </button>
+        </form>
+
+        <p class="auth-footer">
+          ¿Ya tenés cuenta?
+          <a href="index.html">Iniciar sesión</a>
+        </p>
+
+      </div>
+    </div>
+
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>Auth.initRegisterPage();</script>
+</body>
+</html>

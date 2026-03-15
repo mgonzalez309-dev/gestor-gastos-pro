@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+build/
+.next/
+
+# Environment variables – NEVER commitear
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Uploads del usuario (archivos subidos por la app)
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Prisma generated
+backend/src/generated/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/settings.json
+.idea/
+
+# OCR training data (pesados, no necesarios en repo)
+backend/eng.traineddata
+backend/spa.traineddata

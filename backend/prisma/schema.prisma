@@ -1,0 +1,107 @@
+// This is your Prisma schema file.
+// Learn more about Prisma schemas at https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum Role {
+  USER
+  ADVISOR
+}
+
+enum Category {
+  FOOD          // Alimentación
+  TRANSPORT     // Transporte
+  ENTERTAINMENT // Entretenimiento
+  HEALTH        // Salud
+  EDUCATION     // Educación
+  CLOTHING      // Ropa e indumentaria
+  TECHNOLOGY    // Tecnología
+  HOME          // Hogar
+  SERVICES      // Servicios
+  OTHER         // Otros
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MODELOS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role          Role     @default(USER)
+  currency      String   @default("ARS")
+  age           Int?
+  monthlyIncome Float?   @map("monthly_income")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  expenses               Expense[]
+  tickets                Ticket[]
+  receivedRecommendations Recommendation[] @relation("UserRecommendations")
+  givenRecommendations    Recommendation[] @relation("AdvisorRecommendations")
+
+  @@map("users")
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  merchant    String
+  amount      Float
+  category    Category @default(OTHER)
+  date        DateTime
+  description String?
+  ticketId    String?  @map("ticket_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ticket Ticket? @relation(fields: [ticketId], references: [id])
+
+  @@map("expenses")
+}
+
+model Ticket {
+  id             String    @id @default(cuid())
+  userId         String    @map("user_id")
+  imageUrl       String    @map("image_url")
+  extractedText  String?   @map("extracted_text")
+  parsedAmount   Float?    @map("parsed_amount")
+  parsedTax      Float?    @map("parsed_tax")
+  parsedMerchant String?   @map("parsed_merchant")
+  parsedItems    Json?     @map("parsed_items")
+  parsedDate     DateTime? @map("parsed_date")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expenses Expense[]
+
+  @@map("tickets")
+}
+
+model Recommendation {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  advisorId String?  @map("advisor_id")
+  message   String
+  type      String   @default("GENERAL") // GENERAL | ALERT | SAVING | PATTERN
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user    User  @relation("UserRecommendations", fields: [userId], references: [id], onDelete: Cascade)
+  advisor User? @relation("AdvisorRecommendations", fields: [advisorId], references: [id])
+
+  @@map("recommendations")
+}

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="/assets/logo.png" />
+  <title>Mis gastos - GastosApp</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="css/design-tokens.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/dashboard.css" />
+</head>
+<body class="dashboard-grid-shell" data-page="expenses">
+  <div id="sidebar-slot" class="left-sidebar"></div>
+  <div class="overlay hidden" id="overlay"></div>
+
+  <main class="main-panel page-stack">
+    <header class="page-header glass-card">
+      <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Abrir menu">☰</button>
+      <div>
+        <h1 class="page-title">Mis gastos</h1>
+        <p class="page-subtitle">Administra y analiza tus gastos</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-primary" id="btn-new-expense">+ Nuevo gasto</button>
+      </div>
+    </header>
+
+    <div class="page-content">
+      <section class="filter-bar">
+        <div class="filter-group">
+          <label for="filter-category" class="form-label">Categoria</label>
+          <select id="filter-category" class="form-input form-input--sm">
+            <option value="">Todas</option>
+            <option value="FOOD">Alimentacion</option>
+            <option value="TRANSPORT">Transporte</option>
+            <option value="ENTERTAINMENT">Entretenimiento</option>
+            <option value="HEALTH">Salud</option>
+            <option value="EDUCATION">Educacion</option>
+            <option value="CLOTHING">Ropa</option>
+            <option value="TECHNOLOGY">Tecnologia</option>
+            <option value="HOME">Hogar</option>
+            <option value="SERVICES">Servicios</option>
+            <option value="OTHER">Otros</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="filter-period" class="form-label">Periodo</label>
+          <select id="filter-period" class="form-input form-input--sm">
+            <option value="">Todos</option>
+            <option value="year">Por ano</option>
+            <option value="month">Por mes</option>
+            <option value="week">Por semana</option>
+            <option value="date">Fecha especifica</option>
+            <option value="custom">Rango personalizado</option>
+          </select>
+        </div>
+
+        <div class="filter-group filter-period-field" id="fp-year" style="display:none">
+          <label for="filter-year" class="form-label">Ano</label>
+          <select id="filter-year" class="form-input form-input--sm"></select>
+        </div>
+
+        <div class="filter-group filter-period-field" id="fp-month" style="display:none">
+          <label for="filter-month" class="form-label">Mes</label>
+          <select id="filter-month" class="form-input form-input--sm">
+            <option value="1">Enero</option><option value="2">Febrero</option>
+            <option value="3">Marzo</option><option value="4">Abril</option>
+            <option value="5">Mayo</option><option value="6">Junio</option>
+            <option value="7">Julio</option><option value="8">Agosto</option>
+            <option value="9">Septiembre</option><option value="10">Octubre</option>
+            <option value="11">Noviembre</option><option value="12">Diciembre</option>
+          </select>
+        </div>
+
+        <div class="filter-group filter-period-field" id="fp-month-year" style="display:none">
+          <label for="filter-month-year" class="form-label">Ano</label>
+          <select id="filter-month-year" class="form-input form-input--sm"></select>
+        </div>
+
+        <div class="filter-group filter-period-field" id="fp-week" style="display:none">
+          <label for="filter-week" class="form-label">Semana del</label>
+          <input type="date" id="filter-week" class="form-input form-input--sm" />
+        </div>
+
+        <div class="filter-group filter-period-field" id="fp-date" style="display:none">
+          <label for="filter-specific-date" class="form-label">Fecha</label>
+          <input type="date" id="filter-specific-date" class="form-input form-input--sm" />
+        </div>
+
+        <div class="filter-group filter-period-field" id="fp-custom-start" style="display:none">
+          <label for="filter-start" class="form-label">Desde</label>
+          <input type="date" id="filter-start" class="form-input form-input--sm" />
+        </div>
+
+        <div class="filter-group filter-period-field" id="fp-custom-end" style="display:none">
+          <label for="filter-end" class="form-label">Hasta</label>
+          <input type="date" id="filter-end" class="form-input form-input--sm" />
+        </div>
+
+        <div class="filter-group filter-group--btn">
+          <button class="btn btn-secondary btn-sm" id="btn-filter">Filtrar</button>
+          <button class="btn btn-ghost btn-sm" id="btn-clear-filter">Limpiar</button>
+        </div>
+      </section>
+
+      <section class="section">
+        <div id="expenses-alert" class="alert hidden mb-1"></div>
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Comercio</th>
+                <th>Categoria</th>
+                <th>Descripcion</th>
+                <th>Fecha</th>
+                <th class="text-right">Monto</th>
+                <th class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="expenses-tbody">
+              <tr><td colspan="6" class="table-empty">Cargando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination" id="pagination"></div>
+      </section>
+    </div>
+  </main>
+
+  <aside class="right-sidebar glass-card">
+    <div class="right-sidebar-stack">
+      <section>
+        <h4 class="sidebar-section-title">Quick Actions</h4>
+        <div class="quick-actions">
+          <button class="btn btn-ghost action-btn">Exportar gastos</button>
+          <button class="btn btn-ghost action-btn">Crear reporte</button>
+          <button class="btn btn-ghost action-btn">Programar recordatorio</button>
+        </div>
+      </section>
+    </div>
+  </aside>
+
+  <div class="modal hidden" id="expense-modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="expense-modal-title">Nuevo gasto</h3>
+        <button class="modal-close" id="expense-modal-close">X</button>
+      </div>
+      <div class="modal-body">
+        <div id="expense-form-alert" class="alert hidden mb-1"></div>
+        <form id="expense-form" novalidate>
+          <input type="hidden" id="expense-id" />
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="exp-merchant">Comercio *</label>
+              <input type="text" id="exp-merchant" class="form-input" placeholder="Ej: Supermercado" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="exp-amount">Monto *</label>
+              <input type="number" id="exp-amount" class="form-input" placeholder="0.00" min="0.01" step="0.01" required />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="exp-category">Categoria *</label>
+              <select id="exp-category" class="form-input" required>
+                <option value="">Selecciona...</option>
+                <option value="FOOD">Alimentacion</option>
+                <option value="TRANSPORT">Transporte</option>
+                <option value="ENTERTAINMENT">Entretenimiento</option>
+                <option value="HEALTH">Salud</option>
+                <option value="EDUCATION">Educacion</option>
+                <option value="CLOTHING">Ropa</option>
+                <option value="TECHNOLOGY">Tecnologia</option>
+                <option value="HOME">Hogar</option>
+                <option value="SERVICES">Servicios</option>
+                <option value="OTHER">Otros</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="exp-date">Fecha *</label>
+              <input type="date" id="exp-date" class="form-input" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="exp-description">Descripcion</label>
+            <textarea id="exp-description" class="form-input form-textarea" placeholder="Notas adicionales"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="expense-cancel-btn">Cancelar</button>
+        <button class="btn btn-primary" id="expense-save-btn">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="delete-modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box" style="max-width:400px;">
+      <div class="modal-header">
+        <h3>Eliminar gasto</h3>
+        <button class="modal-close" id="delete-modal-close">X</button>
+      </div>
+      <div class="modal-body">
+        <p>Estas seguro de que quieres eliminar este gasto? Esta accion no se puede deshacer.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="delete-cancel-btn">Cancelar</button>
+        <button class="btn btn-primary" id="delete-confirm-btn">Eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/components.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/expenses.js"></script>
+  <script>
+    (async () => {
+      await UIComponents.loadSidebar('sidebar-slot', 'expenses');
+      Auth.requireAuth();
+      Expenses.init();
+    })();
+  </script>
+</body>
+</html>

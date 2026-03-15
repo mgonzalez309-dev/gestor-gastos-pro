@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="/assets/logo.png" />
+  <title>Mi perfil - GastosApp</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="css/design-tokens.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/dashboard.css" />
+</head>
+<body class="dashboard-grid-shell" data-page="profile">
+  <div id="sidebar-slot" class="left-sidebar"></div>
+  <div class="overlay hidden" id="overlay"></div>
+
+  <main class="main-panel page-stack">
+    <header class="page-header glass-card">
+      <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Abrir menu">☰</button>
+      <div>
+        <h1 class="page-title">Mi perfil</h1>
+        <p class="page-subtitle">Gestiona tu informacion personal y configuracion financiera</p>
+      </div>
+    </header>
+
+    <div class="page-content">
+      <div id="profile-page-alert" class="alert hidden mb-1"></div>
+
+      <div class="profile-layout">
+        <div class="card profile-main-card">
+          <div class="profile-avatar-section">
+            <label class="profile-avatar-wrapper" for="profile-avatar-input" title="Cambiar foto de perfil">
+              <div class="profile-avatar-display" id="profile-avatar-display">
+                <svg class="profile-avatar-default-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12Zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8Z"/>
+                </svg>
+              </div>
+              <div class="profile-avatar-overlay">Cambiar foto</div>
+              <input type="file" id="profile-avatar-input" accept="image/*" class="hidden" />
+            </label>
+            <p class="profile-avatar-hint">Haz clic en el avatar para cambiar tu foto</p>
+          </div>
+
+          <form id="profile-form" novalidate>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="p-name">Nombre completo *</label>
+                <input type="text" id="p-name" class="form-input" required autofocus />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="p-age">Edad</label>
+                <input type="number" id="p-age" class="form-input" min="1" max="120" placeholder="Ej: 28" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="p-email">Correo electronico *</label>
+              <input type="email" id="p-email" class="form-input" required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="p-currency">Moneda predeterminada</label>
+              <select id="p-currency" class="form-input">
+                <option value="ARS">ARS - Peso argentino</option>
+                <option value="USD">USD - Dolar estadounidense</option>
+                <option value="EUR">EUR - Euro</option>
+                <option value="BRL">BRL - Real brasileno</option>
+                <option value="CLP">CLP - Peso chileno</option>
+                <option value="MXN">MXN - Peso mexicano</option>
+                <option value="UYU">UYU - Peso uruguayo</option>
+                <option value="GBP">GBP - Libra esterlina</option>
+              </select>
+              <p class="form-hint">Define el formato de todos los montos de la app.</p>
+            </div>
+
+            <hr class="form-divider" />
+
+            <h4 class="form-section-title">Cambiar contrasena</h4>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="p-password">Nueva contrasena</label>
+                <input type="password" id="p-password" class="form-input" minlength="6" placeholder="Minimo 6 caracteres" autocomplete="new-password" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="p-password-confirm">Confirmar contrasena</label>
+                <input type="password" id="p-password-confirm" class="form-input" placeholder="Repite la contrasena" autocomplete="new-password" />
+              </div>
+            </div>
+          </form>
+
+          <div class="profile-actions">
+            <button class="btn btn-primary" id="profile-save-btn">
+              <span class="btn-text">Guardar cambios</span>
+              <span class="btn-spinner hidden">Cargando...</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="profile-side-col">
+          <div class="card budget-config-card">
+            <div class="card-title-row">
+              <span class="card-title-icon">IN</span>
+              <h3 class="card-title">Presupuesto mensual</h3>
+            </div>
+            <p class="card-subtitle">Configura tu ingreso mensual y ve tu disponible.</p>
+
+            <div class="form-group mt-1">
+              <label class="form-label" for="p-income">Ingreso mensual</label>
+              <div class="input-currency-wrapper">
+                <span class="input-currency-badge" id="income-currency-badge">ARS</span>
+                <input type="number" id="p-income" class="form-input" min="0" step="100" placeholder="Ej: 250000" />
+              </div>
+            </div>
+
+            <button class="btn btn-secondary" id="income-save-btn">
+              <span class="btn-text">Guardar ingreso</span>
+              <span class="btn-spinner hidden">Cargando...</span>
+            </button>
+          </div>
+
+          <div class="card budget-summary-card" id="budget-summary-card">
+            <div class="budget-summary-header">
+              <span class="budget-summary-icon">SM</span>
+              <h3 class="card-title">Este mes</h3>
+            </div>
+
+            <div class="budget-row"><span class="budget-label">Ingreso mensual</span><span class="budget-value" id="bs-income">-</span></div>
+            <div class="budget-row"><span class="budget-label">Gastado</span><span class="budget-value budget-value--spent" id="bs-spent">-</span></div>
+            <hr class="budget-divider" />
+            <div class="budget-row budget-row--total"><span class="budget-label">Disponible</span><span class="budget-value budget-available" id="bs-available">-</span></div>
+
+            <div class="budget-bar-wrapper">
+              <div class="budget-bar-track"><div class="budget-bar-fill" id="bs-bar" style="width:0%"></div></div>
+              <span class="budget-bar-pct" id="bs-pct">0%</span>
+            </div>
+          </div>
+
+          <div class="card profile-stats-card" id="profile-stats-card">
+            <h3 class="card-title">Mi cuenta</h3>
+            <div class="profile-stat-row"><span>Gastos registrados</span><strong id="ps-expense-count">-</strong></div>
+            <div class="profile-stat-row"><span>Tickets subidos</span><strong id="ps-ticket-count">-</strong></div>
+            <div class="profile-stat-row"><span>Miembro desde</span><strong id="ps-member-since">-</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <aside class="right-sidebar glass-card">
+    <div class="right-sidebar-stack">
+      <section>
+        <h4 class="sidebar-section-title">Quick Actions</h4>
+        <div class="quick-actions">
+          <button class="btn btn-ghost action-btn">Actualizar datos</button>
+          <button class="btn btn-ghost action-btn">Configurar seguridad</button>
+        </div>
+      </section>
+    </div>
+  </aside>
+
+  <script src="js/api.js"></script>
+  <script src="js/components.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/profile.js"></script>
+  <script>
+    (async () => {
+      await UIComponents.loadSidebar('sidebar-slot', 'profile');
+      Auth.requireAuth();
+      Profile.init();
+    })();
+  </script>
+</body>
+</html>

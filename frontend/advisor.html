@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="/assets/logo.png" />
+  <title>Panel asesor - GastosApp</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="css/design-tokens.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/dashboard.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+</head>
+<body class="dashboard-grid-shell" data-page="advisor">
+  <div id="sidebar-slot" class="left-sidebar"></div>
+  <div class="overlay hidden" id="overlay"></div>
+
+  <main class="main-panel page-stack">
+    <header class="page-header glass-card">
+      <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Abrir menu">☰</button>
+      <div>
+        <h1 class="page-title">Panel de asesor financiero</h1>
+        <p class="page-subtitle">Analiza el comportamiento financiero de tus clientes</p>
+      </div>
+    </header>
+
+    <div class="page-content">
+      <section class="section card">
+        <div class="section-header">
+          <h2 class="section-title">Usuarios registrados</h2>
+          <div class="search-wrapper">
+            <input type="text" id="user-search" class="form-input form-input--sm" placeholder="Buscar usuario" />
+          </div>
+        </div>
+        <div class="users-grid" id="users-grid">
+          <div class="empty-state-sm">Cargando usuarios...</div>
+        </div>
+      </section>
+
+      <section class="section hidden" id="user-detail-panel">
+        <div class="user-detail-header">
+          <button class="btn btn-ghost btn-sm" id="btn-back-users">Volver a usuarios</button>
+          <div class="user-detail-meta">
+            <div class="user-avatar user-avatar--lg" id="detail-avatar">JD</div>
+            <div>
+              <h2 id="detail-user-name">-</h2>
+              <span id="detail-user-email" class="text-muted">-</span>
+            </div>
+          </div>
+          <button class="btn btn-primary" id="btn-auto-recommend">Generar recomendaciones automáticas</button>
+        </div>
+
+        <div class="cards-grid">
+          <div class="stat-card"><div class="stat-card-body"><span class="stat-label">Total gastado</span><span class="stat-value" id="detail-total">-</span></div></div>
+          <div class="stat-card"><div class="stat-card-body"><span class="stat-label">Cantidad de gastos</span><span class="stat-value" id="detail-count">-</span></div></div>
+          <div class="stat-card"><div class="stat-card-body"><span class="stat-label">Gasto promedio</span><span class="stat-value" id="detail-avg">-</span></div></div>
+          <div class="stat-card"><div class="stat-card-body"><span class="stat-label">Variacion mensual</span><span class="stat-value" id="detail-growth">-</span></div></div>
+        </div>
+
+        <div class="charts-grid">
+          <div class="chart-card">
+            <div class="chart-header"><h3 class="chart-title">Por categoria</h3></div>
+            <div class="chart-body"><canvas id="advisor-chart-category"></canvas></div>
+          </div>
+          <div class="chart-card chart-card--wide">
+            <div class="chart-header"><h3 class="chart-title">Evolucion mensual</h3></div>
+            <div class="chart-body"><canvas id="advisor-chart-monthly"></canvas></div>
+          </div>
+        </div>
+
+        <div class="two-column-layout">
+          <div class="card">
+            <h3 class="card-title">Tendencias de categorias</h3>
+            <div id="trends-list" class="trends-list"><div class="empty-state-sm">Cargando...</div></div>
+          </div>
+          <div class="card">
+            <div class="section-header mb-1">
+              <h3 class="card-title">Recomendaciones</h3>
+              <button class="btn btn-secondary btn-sm" id="btn-open-rec-form">+ Nueva</button>
+            </div>
+            <div id="advisor-recs-list" class="recommendations-list"><div class="empty-state-sm">Sin recomendaciones aun.</div></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <aside class="right-sidebar glass-card">
+    <div class="right-sidebar-stack">
+      <section>
+        <h4 class="sidebar-section-title">Quick Actions</h4>
+        <div class="quick-actions">
+          <button class="btn btn-ghost action-btn">Nuevo reporte</button>
+          <button class="btn btn-ghost action-btn">Enviar resumen</button>
+        </div>
+      </section>
+    </div>
+  </aside>
+
+  <div class="modal hidden" id="rec-modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Nueva recomendacion</h3>
+        <button class="modal-close" id="rec-modal-close">X</button>
+      </div>
+      <div class="modal-body">
+        <div id="rec-alert" class="alert hidden mb-1"></div>
+        <form id="rec-form">
+          <div class="form-group">
+            <label class="form-label" for="rec-type">Tipo</label>
+            <select id="rec-type" class="form-input">
+              <option value="GENERAL">General</option>
+              <option value="ALERT">Alerta</option>
+              <option value="SAVING">Ahorro</option>
+              <option value="PATTERN">Patron de consumo</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="rec-message">Mensaje *</label>
+            <textarea id="rec-message" class="form-input form-textarea" rows="4" required></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="rec-cancel-btn">Cancelar</button>
+        <button class="btn btn-primary" id="rec-save-btn">Enviar recomendacion</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/components.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/advisor.js"></script>
+  <script>
+    (async () => {
+      await UIComponents.loadSidebar('sidebar-slot', 'advisor');
+      Auth.requireAuth('ADVISOR');
+      Advisor.init();
+    })();
+  </script>
+</body>
+</html>

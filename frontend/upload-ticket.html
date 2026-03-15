@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="/assets/logo.png" />
+  <title>Subir ticket - GastosApp</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="css/design-tokens.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/dashboard.css" />
+</head>
+<body class="dashboard-grid-shell" data-page="tickets">
+  <div id="sidebar-slot" class="left-sidebar"></div>
+  <div class="overlay hidden" id="overlay"></div>
+
+  <main class="main-panel page-stack">
+    <header class="page-header glass-card">
+      <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Abrir menu">☰</button>
+      <div>
+        <h1 class="page-title">Subir ticket</h1>
+        <p class="page-subtitle">Carga una imagen y extrae informacion automaticamente</p>
+      </div>
+    </header>
+
+    <div class="page-content">
+      <div class="steps-indicator">
+        <div class="step active" id="step-1-indicator"><div class="step-circle">1</div><span>Subir imagen</span></div>
+        <div class="step-connector"></div>
+        <div class="step" id="step-2-indicator"><div class="step-circle">2</div><span>Procesando OCR</span></div>
+        <div class="step-connector"></div>
+        <div class="step" id="step-3-indicator"><div class="step-circle">3</div><span>Confirmar gasto</span></div>
+      </div>
+
+      <section id="step-1" class="section card">
+        <h2 class="card-title">Selecciona la imagen del ticket</h2>
+        <p class="card-subtitle">Formatos aceptados: JPG, PNG, WEBP. Maximo: 10 MB</p>
+
+        <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="Zona de carga de archivo">
+          <div class="dropzone-idle" id="dropzone-idle">
+            <div class="dropzone-icon">OCR</div>
+            <p class="dropzone-text">Arrastra y suelta tu ticket aqui</p>
+            <p class="dropzone-hint">o haz clic para seleccionar un archivo</p>
+          </div>
+          <div class="dropzone-preview hidden" id="dropzone-preview">
+            <img id="preview-img" src="" alt="Vista previa del ticket" />
+            <p id="preview-name" class="dropzone-filename"></p>
+          </div>
+          <input type="file" id="ticket-file-input" accept="image/*" class="hidden" />
+        </div>
+
+        <div id="upload-alert" class="alert hidden mt-1"></div>
+
+        <div class="card-actions">
+          <button class="btn btn-ghost" id="btn-clear-upload" disabled>Limpiar</button>
+          <button class="btn btn-primary" id="btn-upload" disabled>
+            <span id="btn-upload-text">Procesar con OCR</span>
+            <span id="btn-upload-spinner" class="hidden">Procesando...</span>
+          </button>
+        </div>
+      </section>
+
+      <section id="step-2" class="section hidden card text-center">
+        <div class="ocr-processing">
+          <div class="ocr-spinner">AI</div>
+          <h2>Procesando imagen...</h2>
+          <p>La IA esta extrayendo la informacion del ticket.</p>
+          <p class="text-muted">Esto puede tardar unos segundos.</p>
+          <div class="progress-bar-wrapper mt-1"><div class="progress-bar" id="ocr-progress"></div></div>
+        </div>
+      </section>
+
+      <section id="step-3" class="section hidden">
+        <div class="two-column-layout">
+          <div class="card">
+            <h3 class="card-title">Texto extraido del ticket</h3>
+            <pre id="extracted-text" class="extracted-text">-</pre>
+          </div>
+
+          <div class="card">
+            <h3 class="card-title">Confirmar datos del gasto</h3>
+            <p class="card-subtitle">Revisa y corrige la informacion si es necesario.</p>
+            <div id="ocr-result-alert" class="alert hidden mb-1"></div>
+
+            <form id="ticket-expense-form" novalidate>
+              <input type="hidden" id="ticket-id" />
+              <div class="form-group">
+                <label class="form-label" for="t-merchant">Comercio *</label>
+                <input type="text" id="t-merchant" class="form-input" required />
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="t-amount">Monto *</label>
+                  <input type="number" id="t-amount" class="form-input" min="0.01" step="0.01" required />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="t-date">Fecha *</label>
+                  <input type="date" id="t-date" class="form-input" required />
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="t-category">Categoria *</label>
+                <select id="t-category" class="form-input" required>
+                  <option value="">Selecciona...</option>
+                  <option value="FOOD">Alimentacion</option>
+                  <option value="TRANSPORT">Transporte</option>
+                  <option value="ENTERTAINMENT">Entretenimiento</option>
+                  <option value="HEALTH">Salud</option>
+                  <option value="EDUCATION">Educacion</option>
+                  <option value="CLOTHING">Ropa</option>
+                  <option value="TECHNOLOGY">Tecnologia</option>
+                  <option value="HOME">Hogar</option>
+                  <option value="SERVICES">Servicios</option>
+                  <option value="OTHER">Otros</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="t-description">Descripcion</label>
+                <textarea id="t-description" class="form-input form-textarea"></textarea>
+              </div>
+            </form>
+
+            <div class="card-actions">
+              <button class="btn btn-ghost" id="btn-restart-ocr">Subir otro</button>
+              <button class="btn btn-primary" id="btn-save-expense">Registrar gasto</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section card">
+        <div class="section-header"><h2 class="section-title">Tickets procesados recientemente</h2></div>
+        <div class="ticket-history" id="ticket-history"><div class="empty-state-sm">Cargando...</div></div>
+      </section>
+    </div>
+  </main>
+
+  <aside class="right-sidebar glass-card">
+    <div class="right-sidebar-stack">
+      <section>
+        <h4 class="sidebar-section-title">Quick Actions</h4>
+        <div class="quick-actions">
+          <button class="btn btn-ghost action-btn">Ver historial OCR</button>
+          <button class="btn btn-ghost action-btn">Crear gasto manual</button>
+        </div>
+      </section>
+    </div>
+  </aside>
+
+  <script src="js/api.js"></script>
+  <script src="js/components.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/tickets.js"></script>
+  <script>
+    (async () => {
+      await UIComponents.loadSidebar('sidebar-slot', 'tickets');
+      Auth.requireAuth();
+      Tickets.init();
+    })();
+  </script>
+</body>
+</html>
