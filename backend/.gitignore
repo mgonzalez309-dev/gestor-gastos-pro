@@ -29,4 +29,4 @@ Thumbs.db
 *.sw?
 
 # Prisma
-prisma/migrations/
+# Mantener migraciones versionadas para reproducir la BD en cualquier entorno.

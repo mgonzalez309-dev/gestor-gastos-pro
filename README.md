@@ -63,7 +63,9 @@ Proyecto Ingenieria Web II/
 
 - Node.js ≥ 18
 - npm ≥ 9 (o pnpm / yarn)
-- PostgreSQL ≥ 14 corriendo localmente
+- Docker Desktop (recomendado para levantar PostgreSQL automático)
+
+> También puedes usar PostgreSQL local, pero con Docker no hace falta instalarlo manualmente.
 
 ### 1. Backend
 
@@ -84,33 +86,45 @@ DATABASE_URL="postgresql://USUARIO:PASSWORD@localhost:5432/gastosapp"
 JWT_SECRET="cambia-esto-por-un-secreto-seguro"
 JWT_EXPIRATION="24h"
 FRONTEND_URL="http://localhost:5500"
-PORT=3000
+PORT=4500
 ```
 
 > Reemplaza `USUARIO` y `PASSWORD` con las credenciales de tu PostgreSQL local.
 
 ```bash
-# Crear la base de datos y aplicar migraciones
-npx prisma migrate dev --name init
-
-# Generar el cliente Prisma (si no se auto-generó)
-npx prisma generate
-
-# Iniciar el servidor en modo desarrollo
-npm run start:dev
+# Iniciar en modo seguro (si falta .env lo crea, levanta PostgreSQL por Docker y aplica migraciones)
+npm run start:dev:safe
 ```
 
-La API queda disponible en `http://localhost:3000/api`.  
-Documentación Swagger: `http://localhost:3000/docs`
+Flujo automático de `start:dev:safe`:
+
+- Crea `.env` desde `.env.example` si no existe.
+- Ejecuta `docker compose up -d db` (servicio PostgreSQL local).
+- Espera a que la base esté healthy.
+- Corre `npx prisma migrate deploy`.
+- Inicia NestJS en modo watch.
+
+La API queda disponible en `http://localhost:4500/api`.  
+Documentación Swagger: `http://localhost:4500/docs`
+
+### Arranque full app (backend + frontend)
+
+Desde la raíz del proyecto en PowerShell:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\iniciar.ps1
+```
+
+Ese script inicia backend y frontend automáticamente.
 
 ### 2. Frontend
 
 Abre `frontend/index.html` directamente desde VS Code usando la extensión **Live Server** (recomendado, da soporte a `http://` y evita problemas de CORS).
 
-Si el backend no corre en `http://localhost:3000`, actualiza la variable `API_BASE_URL` al inicio de `frontend/js/api.js`:
+Si el backend no corre en `http://localhost:4500`, actualiza la variable `API_BASE_URL` al inicio de `frontend/js/api.js`:
 
 ```js
-const API_BASE_URL = 'http://localhost:3000/api';  // ← cambia según tu entorno
+const API_BASE_URL = 'http://localhost:4500/api';  // ← cambia según tu entorno
 ```
 
 ---

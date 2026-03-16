@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "users" ADD COLUMN     "age" INTEGER,
+ADD COLUMN     "monthly_income" DOUBLE PRECISION;
