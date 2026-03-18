@@ -303,6 +303,12 @@ select:focus {
   border-color: rgba(255, 255, 255, 0.4);
 }
 
+/* Browser-native dropdown options need explicit colors to avoid white text on white menu */
+select option {
+  color: #111827;
+  background: #ffffff;
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;

@@ -50,7 +50,7 @@
           <label for="filter-period" class="form-label">Periodo</label>
           <select id="filter-period" class="form-input form-input--sm">
             <option value="">Todos</option>
-            <option value="year">Por ano</option>
+            <option value="year">Por año</option>
             <option value="month">Por mes</option>
             <option value="week">Por semana</option>
             <option value="date">Fecha especifica</option>
@@ -59,7 +59,7 @@
         </div>
 
         <div class="filter-group filter-period-field" id="fp-year" style="display:none">
-          <label for="filter-year" class="form-label">Ano</label>
+          <label for="filter-year" class="form-label">Año</label>
           <select id="filter-year" class="form-input form-input--sm"></select>
         </div>
 
@@ -135,9 +135,9 @@
       <section>
         <h4 class="sidebar-section-title">Quick Actions</h4>
         <div class="quick-actions">
-          <button class="btn btn-ghost action-btn">Exportar gastos</button>
-          <button class="btn btn-ghost action-btn">Crear reporte</button>
-          <button class="btn btn-ghost action-btn">Programar recordatorio</button>
+          <button class="btn btn-ghost action-btn" id="btn-export-excel">Exportar gastos (Excel)</button>
+          <button class="btn btn-ghost action-btn" id="btn-export-pdf">Exportar gastos (PDF)</button>
+          <button class="btn btn-ghost action-btn" id="btn-generate-report">Crear reporte</button>
         </div>
       </section>
     </div>
@@ -216,7 +216,106 @@
     </div>
   </div>
 
+  <div class="modal hidden" id="report-modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box" style="max-width:760px;">
+      <div class="modal-header">
+        <h3>Generar reporte PDF</h3>
+        <button class="modal-close" id="report-modal-close">X</button>
+      </div>
+      <div class="modal-body">
+        <div id="report-form-alert" class="alert hidden mb-1"></div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="report-filter-category" class="form-label">Categoria</label>
+            <select id="report-filter-category" class="form-input">
+              <option value="">Todas</option>
+              <option value="FOOD">Alimentacion</option>
+              <option value="TRANSPORT">Transporte</option>
+              <option value="ENTERTAINMENT">Entretenimiento</option>
+              <option value="HEALTH">Salud</option>
+              <option value="EDUCATION">Educacion</option>
+              <option value="CLOTHING">Ropa</option>
+              <option value="TECHNOLOGY">Tecnologia</option>
+              <option value="HOME">Hogar</option>
+              <option value="SERVICES">Servicios</option>
+              <option value="OTHER">Otros</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="report-filter-period" class="form-label">Periodo</label>
+            <select id="report-filter-period" class="form-input">
+              <option value="">Todos</option>
+              <option value="year">Por año</option>
+              <option value="month">Por mes</option>
+              <option value="week">Por semana</option>
+              <option value="date">Fecha especifica</option>
+              <option value="custom">Rango personalizado</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group report-filter-period-field" id="rfp-year" style="display:none;">
+            <label for="report-filter-year" class="form-label">Año</label>
+            <select id="report-filter-year" class="form-input"></select>
+          </div>
+
+          <div class="form-group report-filter-period-field" id="rfp-month" style="display:none;">
+            <label for="report-filter-month" class="form-label">Mes</label>
+            <select id="report-filter-month" class="form-input">
+              <option value="1">Enero</option><option value="2">Febrero</option>
+              <option value="3">Marzo</option><option value="4">Abril</option>
+              <option value="5">Mayo</option><option value="6">Junio</option>
+              <option value="7">Julio</option><option value="8">Agosto</option>
+              <option value="9">Septiembre</option><option value="10">Octubre</option>
+              <option value="11">Noviembre</option><option value="12">Diciembre</option>
+            </select>
+          </div>
+
+          <div class="form-group report-filter-period-field" id="rfp-month-year" style="display:none;">
+            <label for="report-filter-month-year" class="form-label">Año</label>
+            <select id="report-filter-month-year" class="form-input"></select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group report-filter-period-field" id="rfp-week" style="display:none;">
+            <label for="report-filter-week" class="form-label">Semana del</label>
+            <input type="date" id="report-filter-week" class="form-input" />
+          </div>
+
+          <div class="form-group report-filter-period-field" id="rfp-date" style="display:none;">
+            <label for="report-filter-specific-date" class="form-label">Fecha</label>
+            <input type="date" id="report-filter-specific-date" class="form-input" />
+          </div>
+        </div>
+
+        <div class="form-row report-filter-period-field" id="rfp-custom" style="display:none;">
+          <div class="form-group">
+            <label for="report-filter-start" class="form-label">Desde</label>
+            <input type="date" id="report-filter-start" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label for="report-filter-end" class="form-label">Hasta</label>
+            <input type="date" id="report-filter-end" class="form-input" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="report-cancel-btn">Cancelar</button>
+        <button class="btn btn-primary" id="report-generate-btn">Generar PDF</button>
+      </div>
+    </div>
+  </div>
+
   <script src="js/api.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
   <script src="js/components.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/expenses.js"></script>

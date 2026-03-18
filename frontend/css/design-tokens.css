@@ -4,16 +4,20 @@
   --font-family: 'Figtree', system-ui, sans-serif;
 
   --glass-blur: blur(24px);
-  --glass-bg: rgba(255, 255, 255, 0.1);
-  --glass-border: rgba(255, 255, 255, 0.2);
-  --glass-elevated-bg: rgba(255, 255, 255, 0.2);
-  --glass-elevated-border: rgba(255, 255, 255, 0.3);
-  --glass-subtle: rgba(255, 255, 255, 0.05);
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(128, 151, 190, 0.25);
+  --glass-elevated-bg: rgba(255, 255, 255, 0.88);
+  --glass-elevated-border: rgba(128, 151, 190, 0.36);
+  --glass-subtle: rgba(31, 76, 150, 0.05);
 
-  --text-primary: rgba(255, 255, 255, 1);
-  --text-secondary: rgba(255, 255, 255, 0.8);
-  --text-muted: rgba(255, 255, 255, 0.6);
-  --text-subtle: rgba(255, 255, 255, 0.4);
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --text-subtle: #94a3b8;
+
+  --page-grad-start: #f4f8ff;
+  --page-grad-mid: #e9f1ff;
+  --page-grad-end: #f7fbff;
 
   --color-blue: #60a5fa;
   --color-green: #4ade80;
@@ -51,8 +55,42 @@ body {
 body {
   font-family: var(--font-family);
   min-height: 100vh;
-  background: linear-gradient(135deg, #0f172a 0%, #111827 45%, #1e293b 100%);
+  background: linear-gradient(135deg, var(--page-grad-start) 0%, var(--page-grad-mid) 45%, var(--page-grad-end) 100%);
   color: var(--text-primary);
+}
+
+body[data-theme='light'] {
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(128, 151, 190, 0.25);
+  --glass-elevated-bg: rgba(255, 255, 255, 0.88);
+  --glass-elevated-border: rgba(128, 151, 190, 0.36);
+  --glass-subtle: rgba(31, 76, 150, 0.05);
+
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --text-subtle: #94a3b8;
+
+  --page-grad-start: #f4f8ff;
+  --page-grad-mid: #e9f1ff;
+  --page-grad-end: #f7fbff;
+}
+
+body[data-theme='dark'] {
+  --glass-bg: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-elevated-bg: rgba(255, 255, 255, 0.2);
+  --glass-elevated-border: rgba(255, 255, 255, 0.3);
+  --glass-subtle: rgba(255, 255, 255, 0.05);
+
+  --text-primary: rgba(255, 255, 255, 1);
+  --text-secondary: rgba(255, 255, 255, 0.8);
+  --text-muted: rgba(255, 255, 255, 0.6);
+  --text-subtle: rgba(255, 255, 255, 0.4);
+
+  --page-grad-start: #0f172a;
+  --page-grad-mid: #111827;
+  --page-grad-end: #1e293b;
 }
 
 h1,

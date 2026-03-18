@@ -59,10 +59,8 @@ const Auth = (() => {
     // Budget widget in sidebar footer (if monthlyIncome is set)
     injectSidebarBudget(user);
 
-    // Theme + command/search UI
+    // Theme UI
     injectThemeSwitcher();
-    injectTopbarSearch();
-    injectCommandPalette();
   }
 
   function initPublicTheme() {
