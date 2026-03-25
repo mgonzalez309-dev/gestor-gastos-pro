@@ -197,18 +197,21 @@ UPDATE "User" SET role = 'ADVISOR' WHERE email = 'asesor@empresa.com';
 
 ### Backend → [Render](https://render.com)
 
-1. Crea un nuevo **Web Service** apuntando al directorio `backend/`.
-2. Build command: `npm install && npx prisma generate && npm run build`
-3. Start command: `npm run start:prod`
-4. Agrega las variables de entorno: `DATABASE_URL`, `JWT_SECRET`, `JWT_EXPIRATION`, `FRONTEND_URL`.
+1. Usa el archivo `render.yaml` de la raíz para crear el servicio automáticamente (Blueprint).
+2. Si prefieres configuración manual: root `backend/`, build `npm install && npx prisma generate && npm run build`, start `npm run start:prod`.
+3. Define variables de entorno: `DATABASE_URL`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `FRONTEND_URL`.
+4. El backend ya publica imágenes de tickets en `/uploads/*` para que funcionen desde el dominio público.
 
 ### Frontend → [Netlify](https://netlify.com) o [Vercel](https://vercel.com)
 
 1. Sube solo el directorio `frontend/` o configura el directorio raíz como `frontend`.
-2. **Antes** de subir, actualiza `API_BASE_URL` en `frontend/js/api.js` con la URL de tu backend en Render.
+2. Configura la URL del backend en `frontend/js/runtime-config.js`.
+3. El frontend ya incluye `frontend/netlify.toml` y `frontend/vercel.json` con rutas amigables (`/dashboard`, `/expenses`, etc).
 
 ```js
-const API_BASE_URL = 'https://gastosapp-backend.onrender.com/api';
+window.__GASTOSAPP_CONFIG__ = {
+    apiBaseUrl: 'https://gastosapp-backend.onrender.com/api',
+};
 ```
 
 ---
@@ -219,7 +222,7 @@ const API_BASE_URL = 'https://gastosapp-backend.onrender.com/api';
 |----------|---------|-------------|
 | `DATABASE_URL` | `postgresql://user:pass@host/db` | Cadena de conexión PostgreSQL |
 | `JWT_SECRET` | cadena aleatoria larga | Secreto para firmar tokens |
-| `JWT_EXPIRATION` | `24h` | Duración del token |
+| `JWT_EXPIRES_IN` | `24h` | Duración del token |
 | `FRONTEND_URL` | `https://gastosapp.netlify.app` | Origen permitido por CORS |
 | `PORT` | `3000` | Puerto del servidor (Render lo pone automáticamente) |
 

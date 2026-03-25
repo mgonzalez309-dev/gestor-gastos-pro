@@ -3,7 +3,35 @@
  * Todos los módulos de la app lo usan para realizar peticiones HTTP.
  */
 
-const API_BASE_URL = 'http://localhost:4500/api';
+function normalizeApiBaseUrl(url) {
+  if (!url || typeof url !== 'string') return null;
+  return url.trim().replace(/\/+$/, '');
+}
+
+function isLocalhostHost(hostname) {
+  return hostname === 'localhost' || hostname === '127.0.0.1';
+}
+
+function resolveApiBaseUrl() {
+  const runtimeConfigUrl = window.__GASTOSAPP_CONFIG__?.apiBaseUrl;
+  const windowOverride = window.API_BASE_URL;
+  const storageOverride = localStorage.getItem('api_base_url');
+
+  const configuredUrl = normalizeApiBaseUrl(runtimeConfigUrl)
+    || normalizeApiBaseUrl(windowOverride)
+    || normalizeApiBaseUrl(storageOverride);
+
+  if (configuredUrl) return configuredUrl;
+
+  if (isLocalhostHost(window.location.hostname)) {
+    return 'http://localhost:4500/api';
+  }
+
+  // Same-origin fallback is useful when frontend and backend share host via reverse proxy.
+  return `${window.location.origin}/api`;
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 const Api = (() => {
 
