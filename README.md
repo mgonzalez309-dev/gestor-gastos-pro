@@ -188,31 +188,36 @@ UPDATE "User" SET role = 'ADVISOR' WHERE email = 'asesor@empresa.com';
 
 ---
 
-## Despliegue (gratuito)
+## Despliegue (Railway)
 
 ### Base de datos → [Neon](https://neon.tech) o [Supabase](https://supabase.com)
 
 1. Crea un proyecto y copia la cadena de conexión (`postgresql://...`).
 2. Úsala como `DATABASE_URL` en las variables de entorno del backend.
 
-### Backend → [Render](https://render.com)
+### Backend → [Railway](https://railway.com)
 
-1. Usa el archivo `render.yaml` de la raíz para crear el servicio automáticamente (Blueprint).
-2. Si prefieres configuración manual: root `backend/`, build `npm install && npx prisma generate && npm run build`, start `npm run start:prod`.
-3. Define variables de entorno: `DATABASE_URL`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `FRONTEND_URL`.
+1. Crea un proyecto en Railway y agrega un servicio desde GitHub con **Root Directory** = `backend`.
+2. El servicio usa `backend/railway.toml` automáticamente (build + start + healthcheck).
+3. Variables de entorno requeridas: `DATABASE_URL`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `FRONTEND_URL`.
 4. El backend ya publica imágenes de tickets en `/uploads/*` para que funcionen desde el dominio público.
 
-### Frontend → [Netlify](https://netlify.com) o [Vercel](https://vercel.com)
+### Frontend → Railway (segundo servicio)
 
-1. Sube solo el directorio `frontend/` o configura el directorio raíz como `frontend`.
-2. Configura la URL del backend en `frontend/js/runtime-config.js`.
-3. El frontend ya incluye `frontend/netlify.toml` y `frontend/vercel.json` con rutas amigables (`/dashboard`, `/expenses`, etc).
+1. En el mismo proyecto Railway agrega otro servicio desde GitHub con **Root Directory** = `frontend`.
+2. El servicio usa `frontend/railway.toml` y `frontend/server.js` para servir HTML estático y rutas amigables.
+3. Define `API_BASE_URL` en el servicio frontend con la URL del backend, por ejemplo `https://gastos-backend.up.railway.app/api`.
 
 ```js
-window.__GASTOSAPP_CONFIG__ = {
-    apiBaseUrl: 'https://gastosapp-backend.onrender.com/api',
-};
+API_BASE_URL=https://gastos-backend.up.railway.app/api
 ```
+
+### Orden recomendado
+
+1. Despliega backend primero.
+2. Copia la URL pública del backend.
+3. Configura `API_BASE_URL` en frontend y redeploy.
+4. Actualiza `FRONTEND_URL` en backend con la URL pública del frontend y redeploy.
 
 ---
 
@@ -223,8 +228,9 @@ window.__GASTOSAPP_CONFIG__ = {
 | `DATABASE_URL` | `postgresql://user:pass@host/db` | Cadena de conexión PostgreSQL |
 | `JWT_SECRET` | cadena aleatoria larga | Secreto para firmar tokens |
 | `JWT_EXPIRES_IN` | `24h` | Duración del token |
-| `FRONTEND_URL` | `https://gastosapp.netlify.app` | Origen permitido por CORS |
-| `PORT` | `3000` | Puerto del servidor (Render lo pone automáticamente) |
+| `FRONTEND_URL` | `https://gastos-frontend.up.railway.app` | Origen permitido por CORS |
+| `PORT` | `3000` o asignado por Railway | Puerto del servidor (Railway lo inyecta automáticamente) |
+| `API_BASE_URL` | `https://gastos-backend.up.railway.app/api` | URL de backend consumida por el frontend en Railway |
 
 ---
 
