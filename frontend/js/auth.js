@@ -385,6 +385,7 @@ const Auth = (() => {
       const email    = form.email.value.trim();
       const password = form.password.value;
       const confirm  = form.confirmPassword.value;
+      const role     = form.querySelector('input[name="role"]:checked')?.value || 'USER';
 
       let valid = true;
       if (!name || name.length < 2)            { showFieldError('name', 'Ingresá tu nombre completo.'); valid = false; }
@@ -396,10 +397,10 @@ const Auth = (() => {
       setLoading(btn, btnText, btnSpin, true);
 
       try {
-        const res = await Api.post('/auth/register', { name, email, password });
+        const res = await Api.post('/auth/register', { name, email, password, role });
         Api.saveToken(res.access_token);
         Api.saveUser(res.user);
-        window.location.href = 'dashboard.html';
+        window.location.href = res.user.role === 'ADVISOR' ? 'advisor.html' : 'dashboard.html';
       } catch (err) {
         const isDuplicate = err.message?.toLowerCase().includes('ya existe') ||
                             err.message?.toLowerCase().includes('conflict') ||

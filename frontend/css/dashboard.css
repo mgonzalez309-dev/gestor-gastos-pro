@@ -259,3 +259,128 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Ritmo de Gasto Card ──────────────────────────── */
+.pace-card {
+  border-radius: var(--radius-3xl);
+  padding: var(--space-6);
+  border: 1px solid;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.pace-elevated { background: #fff5f5; border-color: #fca5a5; }
+.pace-low      { background: #f0fdf4; border-color: #86efac; }
+.pace-normal   { background: #f5f3ff; border-color: #c4b5fd; }
+
+.pace-card-main {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.pace-ring-wrapper {
+  position: relative;
+  width: 5rem;
+  height: 5rem;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+}
+
+.pace-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.pace-ring-bg   { fill: none; stroke: rgba(0,0,0,.08); stroke-width: 6; }
+.pace-ring-fill { fill: none; stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset .6s ease; }
+
+.pace-elevated .pace-ring-fill { stroke: #ef4444; }
+.pace-low      .pace-ring-fill { stroke: #22c55e; }
+.pace-normal   .pace-ring-fill { stroke: #6366f1; }
+
+.pace-ring-value {
+  position: relative;
+  font-size: .9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.pace-card-info { flex: 1; min-width: 0; }
+
+.pace-card-title {
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-1);
+}
+
+.pace-card-desc {
+  font-size: .82rem;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-3);
+}
+
+.pace-bars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.pace-bar-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.pace-bar-label {
+  font-size: .75rem;
+  color: var(--text-muted);
+  width: 4.5rem;
+  flex-shrink: 0;
+}
+
+.pace-bar-track {
+  flex: 1;
+  height: .4rem;
+  background: rgba(0,0,0,.08);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.pace-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width .6s ease;
+}
+
+.pace-bar-expected { background: rgba(0,0,0,.2); }
+.pace-elevated .pace-bar-real { background: #ef4444; }
+.pace-low      .pace-bar-real { background: #22c55e; }
+.pace-normal   .pace-bar-real { background: #6366f1; }
+
+.pace-bar-pct {
+  font-size: .72rem;
+  color: var(--text-muted);
+  width: 2.5rem;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.pace-projection {
+  font-size: .78rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Dark mode overrides */
+body[data-theme='dark'] .pace-elevated { background: rgba(239,68,68,.12);  border-color: #f87171; }
+body[data-theme='dark'] .pace-low      { background: rgba(34,197,94,.10);  border-color: #4ade80; }
+body[data-theme='dark'] .pace-normal   { background: rgba(99,102,241,.13); border-color: #818cf8; }
+body[data-theme='dark'] .pace-ring-bg  { stroke: rgba(255,255,255,.12); }
+body[data-theme='dark'] .pace-bar-track    { background: rgba(255,255,255,.1); }
+body[data-theme='dark'] .pace-bar-expected { background: rgba(255,255,255,.25); }

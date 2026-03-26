@@ -171,6 +171,26 @@ const Tickets = (() => {
       ? new Date(ticket.parsedDate).toISOString().split('T')[0]
       : Api.todayISO();
 
+    // Auto-suggest category based on merchant name
+    const categorySelect = document.getElementById('t-category');
+    if (categorySelect) {
+      const suggested = suggestCategory(ticket.parsedMerchant);
+      if (suggested) {
+        categorySelect.value = suggested;
+        let hint = document.getElementById('category-ai-hint');
+        if (!hint) {
+          hint = document.createElement('p');
+          hint.id = 'category-ai-hint';
+          hint.style.cssText = 'font-size:.78rem;color:var(--color-success);margin-top:.25rem;';
+          categorySelect.parentNode.appendChild(hint);
+        }
+        hint.textContent = '\uD83E\uDD16 Categoría sugerida automáticamente según el comercio.';
+      } else {
+        const hint = document.getElementById('category-ai-hint');
+        if (hint) hint.textContent = '';
+      }
+    }
+
     // Show OCR result badge
     const hasData = ticket.parsedAmount || ticket.parsedMerchant;
     Api.showAlert(
@@ -268,6 +288,27 @@ const Tickets = (() => {
     } catch (err) {
       container.innerHTML = '<div class="empty-state-sm">Error cargando historial.</div>';
     }
+  }
+
+  // ── Category suggestion heuristics ───────────────────────────────
+  function suggestCategory(merchantName) {
+    if (!merchantName) return '';
+    const text = merchantName.toLowerCase();
+    const rules = [
+      { cat: 'FOOD',          keywords: ['super','supermercado','coto','jumbo','carrefour','walmart','dia','disco','vea','verduleria','fruteria','panaderia','fiambreria','carniceria','kiosco','despensa','almacen','mcdonald','burger','pizza','sushi','rappi','pedidosya','delivery','restaurant','restaurante','cafe','cafeteria','heladeria','pasteleria','rotiseria'] },
+      { cat: 'TRANSPORT',     keywords: ['ypf','shell','axion','puma','petrobras','nafta','combustible','uber','cabify','taxi','remis','sube','subte','colectivo','tren','bus','latam','aerolineas','vuelo','aeropuerto','estacionamiento','peaje','autopista','gomeria','mecanico'] },
+      { cat: 'ENTERTAINMENT', keywords: ['netflix','spotify','disney','hbo','prime','youtube','cine','cinema','teatro','recital','concierto','steam','playstation','xbox','nintendo','gaming','boliche','bowling','karting'] },
+      { cat: 'HEALTH',        keywords: ['farmacia','osde','swiss medical','galeno','clinica','hospital','medico','doctor','dentista','odontologo','optica','kinesio','fisio','psicologo','nutricionista','laboratorio','drogueria','gym','gimnasio','fitness'] },
+      { cat: 'EDUCATION',     keywords: ['universidad','facultad','colegio','instituto','academia','libreria','udemy','platzi','coursera','educacion','capacitacion','curso','taller','escuela'] },
+      { cat: 'CLOTHING',      keywords: ['zara','h&m','nike','adidas','puma','lacoste','fila','gap','boutique','ropa','indumentaria','zapatilleria','calzado','joyeria','bijouterie'] },
+      { cat: 'TECHNOLOGY',    keywords: ['fravega','garbarino','musimundo','compumundo','pc factory','apple','samsung','lg','sony','lenovo','hp','dell','computadora','celular','smartphone','tablet','electronico','tecnologia'] },
+      { cat: 'HOME',          keywords: ['sodimac','easy','ferreteria','pintureria','bazar','muebleria','hogar','decoracion','jardin','plomero','electricista','cerrajero','limpieza'] },
+      { cat: 'SERVICES',      keywords: ['banco','bbva','santander','galicia','hsbc','macro','nacion','claro','movistar','personal','telecentro','fibertel','cablevision','edesur','edenor','metrogas','afip','rentas','seguro','obra social','prepaga','expensas','alquiler'] },
+    ];
+    for (const rule of rules) {
+      if (rule.keywords.some((kw) => text.includes(kw))) return rule.cat;
+    }
+    return '';
   }
 
   // ── Steps ─────────────────────────────────────────────────────────

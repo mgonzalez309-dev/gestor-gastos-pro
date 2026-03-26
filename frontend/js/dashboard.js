@@ -28,6 +28,7 @@ const Dashboard = (() => {
       renderCategoryChart(cachedAnalytics.byCategory);
       renderMonthlyChart(cachedAnalytics.monthlyData);
       renderMerchantList(cachedAnalytics.topMerchants);
+      renderPaceCard(cachedAnalytics);
     });
   }
 
@@ -41,6 +42,7 @@ const Dashboard = (() => {
       renderMonthlyChart(data.monthlyData);
       renderMerchantList(data.topMerchants);
       renderSidebarInsights(data);
+      renderPaceCard(data);
 
       // Show unusual expenses alert if any
       if (data.unusualExpenses && data.unusualExpenses.length > 0) {
@@ -431,6 +433,79 @@ const Dashboard = (() => {
         cssVar('--chart-cat-10', '#50739e'),
       ],
     };
+  }
+
+  // ── Ritmo de Gasto ────────────────────────────────────────────────
+  function renderPaceCard(data) {
+    const user = Api.getUser();
+    if (!user?.monthlyIncome) return;
+
+    const paceSection = document.getElementById('pace-section');
+    if (!paceSection) return;
+    paceSection.classList.remove('hidden');
+
+    const spent   = data.currentMonth?.total || 0;
+    const income  = user.monthlyIncome;
+    const now     = new Date();
+    const day     = now.getDate();
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+
+    const expectedPct = Math.round((day / daysInMonth) * 100);
+    const realPct     = Math.round((spent / income) * 100);
+    const diff        = realPct - expectedPct;
+    const projected   = day > 0 ? Math.round((spent / day) * daysInMonth) : 0;
+
+    let status, icon, desc;
+    if (diff > 15) {
+      status = 'elevated'; icon = '⚡';
+      desc = `Estás gastando más rápido de lo esperado (${diff > 0 ? '+' : ''}${diff}% sobre el ritmo)`;
+    } else if (diff < -15) {
+      status = 'low'; icon = '\uD83C\uDF31';
+      desc = `Estás por debajo del ritmo esperado (${Math.abs(diff)}% de margen)`;
+    } else {
+      status = 'normal'; icon = '\uD83D\uDC4C';
+      desc = `Tu ritmo de gasto está en línea con tu presupuesto`;
+    }
+
+    const card = document.getElementById('pace-card');
+    if (card) card.className = `pace-card pace-${status}`;
+
+    const descEl = document.getElementById('pace-desc');
+    if (descEl) descEl.textContent = `${icon} ${desc}`;
+
+    // SVG ring (r=34, circumference ≈ 213.6)
+    const circumference = 2 * Math.PI * 34;
+    const fillEl = document.getElementById('pace-ring-fill');
+    if (fillEl) {
+      fillEl.style.strokeDasharray  = circumference;
+      fillEl.style.strokeDashoffset = circumference - (Math.min(realPct, 100) / 100) * circumference;
+    }
+    const ringVal = document.getElementById('pace-pct-real');
+    if (ringVal) ringVal.textContent = `${realPct}%`;
+
+    // Bars
+    const expectedBar = document.getElementById('pace-bar-expected');
+    const realBar     = document.getElementById('pace-bar-real');
+    if (expectedBar) expectedBar.style.width = `${Math.min(expectedPct, 100)}%`;
+    if (realBar)     realBar.style.width     = `${Math.min(realPct, 100)}%`;
+
+    const pctExpEl = document.getElementById('pace-pct-expected');
+    const pctRealEl = document.getElementById('pace-pct-real-bar');
+    if (pctExpEl)  pctExpEl.textContent  = `${expectedPct}%`;
+    if (pctRealEl) pctRealEl.textContent = `${realPct}%`;
+
+    // Projection
+    const projEl = document.getElementById('pace-projection');
+    if (projEl) projEl.innerHTML = `Proyección al fin de mes: <strong>${Api.formatCurrency(projected)}</strong>`;
+
+    // Add insight to sidebar if elevated
+    if (diff > 15) {
+      const insights = document.getElementById('insights-list');
+      if (insights) {
+        const html = `<div class="insight-card insight-card--warn"><span class="insight-icon">⚡</span><p class="insight-text">A este ritmo gastarías <strong>${Api.formatCurrency(projected)}</strong> este mes (${Math.round((projected / income) * 100)}% de tu ingreso).</p></div>`;
+        insights.innerHTML = html + insights.innerHTML;
+      }
+    }
   }
 
   function escapeHtml(str = '') {

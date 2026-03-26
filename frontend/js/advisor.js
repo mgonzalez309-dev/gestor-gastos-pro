@@ -14,6 +14,8 @@ const Advisor = (() => {
     await loadUsers();
     bindSearch();
     bindRecommendationModal();
+    document.getElementById('btn-report')?.addEventListener('click', generatePDF);
+    document.getElementById('btn-summary')?.addEventListener('click', copySummaryToClipboard);
 
     document.addEventListener('app-theme-changed', () => {
       if (selectedUser?.id) {
@@ -329,6 +331,219 @@ const Advisor = (() => {
     } finally {
       btn.disabled    = false;
       btn.textContent = 'Enviar recomendación';
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  // PDF REPORT
+  // ══════════════════════════════════════════════════════════════════
+  async function generatePDF() {
+    if (!selectedUser) {
+      alert('Seleccioná un usuario antes de generar el reporte.');
+      return;
+    }
+    const btn = document.getElementById('btn-report');
+    const btnText = btn?.querySelector('.btn-text');
+    if (btn) btn.disabled = true;
+    if (btnText) btnText.textContent = 'Generando PDF...';
+
+    try {
+      const [analyticsData, recsData, patternsData] = await Promise.all([
+        Api.get(`/expenses/analytics/${selectedUser.id}`),
+        Api.get(`/recommendations/${selectedUser.id}`),
+        Api.get(`/expenses/patterns/${selectedUser.id}`),
+      ]);
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+      const today    = new Date().toLocaleDateString('es-AR');
+      const todayISO = new Date().toISOString().split('T')[0];
+      const blue      = [15, 111, 255];
+      const white     = [255, 255, 255];
+      const lightGray = [248, 249, 252];
+      const darkText  = [30, 41, 59];
+
+      // ── PAGE 1 ───────────────────────────────────────────────────
+      // Header
+      doc.setFillColor(...blue);
+      doc.rect(0, 0, 210, 28, 'F');
+      doc.setTextColor(...white);
+      doc.setFontSize(18); doc.setFont('helvetica', 'bold');
+      doc.text('GastosApp', 14, 13);
+      doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+      doc.text('Reporte financiero de cliente', 14, 21);
+      doc.text(today, 196, 21, { align: 'right' });
+
+      // Client card
+      doc.setFillColor(...lightGray);
+      doc.roundedRect(14, 34, 182, 22, 3, 3, 'F');
+      doc.setTextColor(...darkText);
+      doc.setFontSize(13); doc.setFont('helvetica', 'bold');
+      doc.text(selectedUser.name, 22, 44);
+      doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 116, 139);
+      doc.text(selectedUser.email, 22, 51);
+
+      // 4 metric boxes
+      const g = analyticsData.monthGrowth || 0;
+      const metrics = [
+        { label: 'Total del mes',    value: Api.formatCurrency(analyticsData.currentMonth?.total || 0) },
+        { label: 'Cant. de gastos',  value: String(analyticsData.currentMonth?.count || 0) },
+        { label: 'Gasto promedio',   value: Api.formatCurrency(analyticsData.averageExpense || 0) },
+        { label: 'Variación mensual', value: `${g > 0 ? '+' : ''}${g.toFixed(1)}%` },
+      ];
+      metrics.forEach((m, i) => {
+        const x = 14 + i * 46;
+        doc.setFillColor(240, 244, 255);
+        doc.roundedRect(x, 62, 42, 22, 2, 2, 'F');
+        doc.setTextColor(100, 116, 139); doc.setFontSize(7); doc.setFont('helvetica', 'normal');
+        doc.text(m.label, x + 21, 69, { align: 'center' });
+        doc.setTextColor(...blue); doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+        doc.text(m.value, x + 21, 79, { align: 'center' });
+      });
+
+      // Category table
+      doc.setTextColor(...darkText); doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+      doc.text('Gastos por categoría', 14, 96);
+      const totalSpent = analyticsData.currentMonth?.total || 1;
+      const catRows = (analyticsData.byCategory || []).map((c) => [
+        Api.categoryLabel(c.category).replace(/^\S+\s/, ''),
+        String(c.count),
+        Api.formatCurrency(c.total),
+        `${Math.round((c.total / totalSpent) * 100)}%`,
+      ]);
+      doc.autoTable({
+        startY: 100,
+        head: [['Categoría', 'Gastos', 'Total', '% del mes']],
+        body: catRows.length ? catRows : [['Sin datos', '-', '-', '-']],
+        styles: { fontSize: 9, cellPadding: 3 },
+        headStyles: { fillColor: blue, textColor: white, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: lightGray },
+        margin: { left: 14, right: 14 },
+      });
+
+      // ── PAGE 2 ───────────────────────────────────────────────────
+      doc.addPage();
+      doc.setFillColor(...blue);
+      doc.rect(0, 0, 210, 14, 'F');
+      doc.setTextColor(...white); doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+      doc.text(`GastosApp — Reporte: ${selectedUser.name}`, 14, 9);
+      doc.text('Pág. 2', 196, 9, { align: 'right' });
+
+      // Monthly evolution
+      doc.setTextColor(...darkText); doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+      doc.text('Evolución mensual (últimos 6 meses)', 14, 24);
+      const monthRows = (analyticsData.monthlyData || []).slice(-6).map((m) => {
+        const [yr, mo] = m.month.split('-');
+        return [new Date(yr, mo - 1).toLocaleDateString('es-AR', { month: 'long', year: 'numeric' }), Api.formatCurrency(m.total)];
+      });
+      doc.autoTable({
+        startY: 28,
+        head: [['Mes', 'Total gastado']],
+        body: monthRows.length ? monthRows : [['Sin datos', '-']],
+        styles: { fontSize: 9, cellPadding: 3 },
+        headStyles: { fillColor: blue, textColor: white, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: lightGray },
+        margin: { left: 14, right: 14 },
+      });
+
+      const afterMonthly = doc.lastAutoTable.finalY + 10;
+
+      // Trends
+      doc.setTextColor(...darkText); doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+      doc.text('Tendencias por categoría', 14, afterMonthly);
+      const trendRows = (patternsData.trends || []).map((t) => [
+        Api.categoryLabel(t.category).replace(/^\S+\s/, ''),
+        t.trend === 'increasing' ? '▲' : t.trend === 'decreasing' ? '▼' : '─',
+        `${t.change > 0 ? '+' : ''}${t.change.toFixed(1)}%`,
+      ]);
+      doc.autoTable({
+        startY: afterMonthly + 4,
+        head: [['Categoría', 'Tendencia', 'Cambio %']],
+        body: trendRows.length ? trendRows : [['Sin datos', '-', '-']],
+        styles: { fontSize: 9, cellPadding: 3 },
+        headStyles: { fillColor: blue, textColor: white, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: lightGray },
+        margin: { left: 14, right: 14 },
+      });
+
+      const afterTrends = doc.lastAutoTable.finalY + 10;
+
+      // Recommendations
+      doc.setTextColor(...darkText); doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+      doc.text('Recomendaciones del asesor', 14, afterTrends);
+      const recRows = (recsData || []).map((r) => [
+        r.type,
+        r.message.length > 80 ? r.message.substring(0, 80) + '...' : r.message,
+        new Date(r.createdAt).toLocaleDateString('es-AR'),
+      ]);
+      doc.autoTable({
+        startY: afterTrends + 4,
+        head: [['Tipo', 'Mensaje', 'Fecha']],
+        body: recRows.length ? recRows : [['Sin recomendaciones', '-', '-']],
+        styles: { fontSize: 8, cellPadding: 3 },
+        headStyles: { fillColor: blue, textColor: white, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: lightGray },
+        columnStyles: { 1: { cellWidth: 120 } },
+        margin: { left: 14, right: 14 },
+      });
+
+      doc.save(`Reporte_${selectedUser.name.replace(/\s+/g, '_')}_${todayISO}.pdf`);
+    } catch (err) {
+      alert(`Error generando PDF: ${err.message}`);
+    } finally {
+      if (btn) btn.disabled = false;
+      if (btnText) btnText.textContent = 'Nuevo reporte';
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  // CLIPBOARD SUMMARY
+  // ══════════════════════════════════════════════════════════════════
+  async function copySummaryToClipboard() {
+    if (!selectedUser) {
+      alert('Seleccioná un usuario antes de copiar el resumen.');
+      return;
+    }
+    const btn = document.getElementById('btn-summary');
+    const btnText = btn?.querySelector('.btn-text');
+    if (btn) btn.disabled = true;
+    if (btnText) btnText.textContent = 'Copiando...';
+
+    try {
+      const [analyticsData, recsData] = await Promise.all([
+        Api.get(`/expenses/analytics/${selectedUser.id}`),
+        Api.get(`/recommendations/${selectedUser.id}`),
+      ]);
+
+      const g          = analyticsData.monthGrowth || 0;
+      const total      = analyticsData.currentMonth?.total || 0;
+      const topCats    = (analyticsData.byCategory || []).slice(0, 5);
+      const totalSpent = total || 1;
+
+      let text = `*Resumen financiero — ${selectedUser.name}*\n`;
+      text += `_Generado por GastosApp — ${new Date().toLocaleDateString('es-AR')}_\n\n`;
+      text += `*Total del mes:* ${Api.formatCurrency(total)}\n`;
+      text += `*Variación:* ${g > 0 ? '+' : ''}${g.toFixed(1)}% respecto al mes anterior\n\n`;
+      text += `*Top categorías:*\n`;
+      topCats.forEach((c) => {
+        const pct = Math.round((c.total / totalSpent) * 100);
+        text += `• ${Api.categoryLabel(c.category).replace(/^\S+\s/, '')}: ${Api.formatCurrency(c.total)} (${pct}%)\n`;
+      });
+
+      const activeRecs = (recsData || []).slice(0, 3);
+      if (activeRecs.length) {
+        text += `\n*Últimas recomendaciones:*\n`;
+        activeRecs.forEach((r) => { text += `• [${r.type}] ${r.message}\n`; });
+      }
+
+      await navigator.clipboard.writeText(text);
+      if (btnText) btnText.textContent = '✓ Copiado';
+      setTimeout(() => { if (btnText) btnText.textContent = 'Enviar resumen'; }, 2000);
+    } catch (err) {
+      alert(`Error: ${err.message}`);
+    } finally {
+      if (btn) btn.disabled = false;
     }
   }
 

@@ -249,7 +249,7 @@ export class ReceiptAiService {
 
     const merchant = this.extractMerchantFromLines(lines);
     const date = this.extractDateFromText(rawText);
-    const total = this.extractMoneyByLabel(lines, ['total:'], true);
+    const total = this.extractTotalFromLines(lines);
     const tax = this.extractMoneyByLabel(lines, ['iva', 'tax', 'impuesto'], false);
     const items = this.extractItemsFromLines(lines);
 
@@ -260,6 +260,52 @@ export class ReceiptAiService {
       tax,
       items,
     };
+  }
+
+  /**
+   * 3-level strategy to extract the total amount from ticket lines.
+   * Level 1: high-confidence labels (TOTAL A PAGAR, IMPORTE TOTAL, etc.)
+   * Level 2: any line containing "total" (excluding subtotal / IVA)
+   * Level 3: fallback — largest number in the entire ticket
+   */
+  private extractTotalFromLines(lines: string[]): number | null {
+    const highConfidence = [
+      'total a pagar', 'importe total', 'total importe', 'monto total',
+      'total a cobrar', 'total factura', 'a pagar:', 'monto:', 'importe:',
+      'total $', 'total pesos', 'total ars',
+    ];
+
+    // Level 1
+    for (const line of lines) {
+      const lower = line.toLowerCase();
+      if (highConfidence.some((label) => lower.includes(label))) {
+        const amount = this.extractLastAmountFromLine(line);
+        if (amount !== null) return amount;
+      }
+    }
+
+    // Level 2
+    for (const line of lines) {
+      const lower = line.toLowerCase();
+      if (
+        lower.includes('total') &&
+        !lower.includes('subtotal') &&
+        !/\biva\b/.test(lower)
+      ) {
+        const amount = this.extractLastAmountFromLine(line);
+        if (amount !== null) return amount;
+      }
+    }
+
+    // Level 3 — biggest number in the ticket
+    let maxAmount: number | null = null;
+    for (const line of lines) {
+      const amount = this.extractLastAmountFromLine(line);
+      if (amount !== null && (maxAmount === null || amount > maxAmount)) {
+        maxAmount = amount;
+      }
+    }
+    return maxAmount;
   }
 
   private extractMerchantFromLines(lines: string[]): string | null {

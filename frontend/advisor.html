@@ -11,6 +11,8 @@
   <link rel="stylesheet" href="css/components.css" />
   <link rel="stylesheet" href="css/dashboard.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body class="dashboard-grid-shell" data-page="advisor">
   <div id="sidebar-slot" class="left-sidebar"></div>
@@ -91,8 +93,12 @@
       <section>
         <h4 class="sidebar-section-title">Quick Actions</h4>
         <div class="quick-actions">
-          <button class="btn btn-ghost action-btn">Nuevo reporte</button>
-          <button class="btn btn-ghost action-btn">Enviar resumen</button>
+          <button class="btn btn-ghost action-btn" id="btn-report">
+            <span class="btn-text">Nuevo reporte</span>
+          </button>
+          <button class="btn btn-ghost action-btn" id="btn-summary">
+            <span class="btn-text">Enviar resumen</span>
+          </button>
         </div>
       </section>
     </div>

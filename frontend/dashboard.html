@@ -87,6 +87,38 @@
         </div>
       </section>
 
+      <!-- Ritmo de Gasto (only shown when monthlyIncome is set) -->
+      <section class="section hidden" id="pace-section">
+        <div class="pace-card" id="pace-card">
+          <div class="pace-card-main">
+            <div class="pace-ring-wrapper">
+              <svg class="pace-ring" viewBox="0 0 80 80" aria-hidden="true">
+                <circle class="pace-ring-bg" cx="40" cy="40" r="34" />
+                <circle class="pace-ring-fill" id="pace-ring-fill" cx="40" cy="40" r="34" />
+              </svg>
+              <span class="pace-ring-value" id="pace-pct-real">0%</span>
+            </div>
+            <div class="pace-card-info">
+              <h3 class="pace-card-title">Ritmo de gasto</h3>
+              <p class="pace-card-desc" id="pace-desc">Cargando...</p>
+              <div class="pace-bars">
+                <div class="pace-bar-row">
+                  <span class="pace-bar-label">Esperado</span>
+                  <div class="pace-bar-track"><div class="pace-bar-fill pace-bar-expected" id="pace-bar-expected" style="width:0%"></div></div>
+                  <span class="pace-bar-pct" id="pace-pct-expected">0%</span>
+                </div>
+                <div class="pace-bar-row">
+                  <span class="pace-bar-label">Real</span>
+                  <div class="pace-bar-track"><div class="pace-bar-fill pace-bar-real" id="pace-bar-real" style="width:0%"></div></div>
+                  <span class="pace-bar-pct" id="pace-pct-real-bar">0%</span>
+                </div>
+              </div>
+              <p class="pace-projection" id="pace-projection"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section class="crm-content-grid">
         <article class="card">
           <div class="section-header">
