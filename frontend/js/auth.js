@@ -339,7 +339,12 @@ const Auth = (() => {
         Api.saveUser(res.user);
         window.location.href = 'dashboard.html';
       } catch (err) {
-        Api.showAlert(alertEl, err.message, 'error');
+        const isNotFound = err.message?.toLowerCase().includes('no encontramos');
+        if (isNotFound) {
+          Api.showAlert(alertEl, `No encontramos una cuenta con ese correo. <a href="register.html" style="color:inherit;font-weight:600;text-decoration:underline;">Registrate gratis</a>.`, 'error');
+        } else {
+          Api.showAlert(alertEl, err.message, 'error');
+        }
         setLoading(btn, btnText, btnSpin, false);
       }
     });
@@ -385,7 +390,6 @@ const Auth = (() => {
       const email    = form.email.value.trim();
       const password = form.password.value;
       const confirm  = form.confirmPassword.value;
-      const role     = form.querySelector('input[name="role"]:checked')?.value || 'USER';
 
       let valid = true;
       if (!name || name.length < 2)            { showFieldError('name', 'Ingresá tu nombre completo.'); valid = false; }
@@ -397,10 +401,10 @@ const Auth = (() => {
       setLoading(btn, btnText, btnSpin, true);
 
       try {
-        const res = await Api.post('/auth/register', { name, email, password, role });
+        const res = await Api.post('/auth/register', { name, email, password });
         Api.saveToken(res.access_token);
         Api.saveUser(res.user);
-        window.location.href = res.user.role === 'ADVISOR' ? 'advisor.html' : 'dashboard.html';
+        window.location.href = 'dashboard.html';
       } catch (err) {
         const isDuplicate = err.message?.toLowerCase().includes('ya existe') ||
                             err.message?.toLowerCase().includes('conflict') ||

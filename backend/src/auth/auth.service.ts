@@ -57,13 +57,13 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('Credenciales incorrectas.');
+      throw new UnauthorizedException('No encontramos una cuenta con ese correo.');
     }
 
     const passwordMatch = await bcrypt.compare(dto.password, user.password);
 
     if (!passwordMatch) {
-      throw new UnauthorizedException('Credenciales incorrectas.');
+      throw new UnauthorizedException('Contraseña incorrecta.');
     }
 
     const token = this.generateToken(user.id, user.email, user.role);
