@@ -401,7 +401,14 @@ const Auth = (() => {
         Api.saveUser(res.user);
         window.location.href = 'dashboard.html';
       } catch (err) {
-        Api.showAlert(alertEl, err.message, 'error');
+        const isDuplicate = err.message?.toLowerCase().includes('ya existe') ||
+                            err.message?.toLowerCase().includes('conflict') ||
+                            err.status === 409;
+        if (isDuplicate) {
+          Api.showAlert(alertEl, `Ya existe una cuenta con ese correo. <a href="index.html" style="color:inherit;font-weight:600;text-decoration:underline;">Iniciá sesión</a>.`, 'error');
+        } else {
+          Api.showAlert(alertEl, err.message, 'error');
+        }
         setLoading(btn, btnText, btnSpin, false);
       }
     });
