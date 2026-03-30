@@ -18,11 +18,15 @@ const Auth = (() => {
 
     if (nameEl)   nameEl.textContent   = user.name || 'Usuario';
 
-    // Avatar: photo from localStorage or initials
+    // Avatar: localStorage (fastest) → server avatarUrl → initials
     if (avatarEl) {
       const storedAvatar = localStorage.getItem(`avatar_${user.id}`);
       if (storedAvatar) {
         avatarEl.innerHTML = `<img src="${storedAvatar}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />`;
+      } else if (user.avatarUrl) {
+        // Cache server avatar locally for subsequent loads
+        localStorage.setItem(`avatar_${user.id}`, user.avatarUrl);
+        avatarEl.innerHTML = `<img src="${user.avatarUrl}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />`;
       } else {
         avatarEl.textContent = Api.getInitials(user.name);
       }

@@ -38,4 +38,9 @@ export class UpdateUserDto {
   @Min(0)
   @IsOptional()
   monthlyIncome?: number;
+
+  @ApiPropertyOptional({ example: 'data:image/jpeg;base64,...' })
+  @IsString()
+  @IsOptional()
+  avatarUrl?: string;
 }

@@ -11,18 +11,19 @@ const Profile = (() => {
     if (!user) return;
 
     // Load fresh user data from server
+    let freshUser = user;
     try {
       const fresh = await Api.get(`/users/${user.id}`);
-      // Merge keeping avatar (stored locally) and currency from DB
       Api.saveUser({ ...user, ...fresh });
       populateForm(fresh);
       renderStats(fresh);
+      freshUser = fresh;
     } catch {
       populateForm(user);
       renderStats(user);
     }
 
-    loadAvatar(user.id);
+    loadAvatar(user.id, freshUser.avatarUrl);
     await loadBudgetSummary();
     bindEvents();
   }
@@ -50,9 +51,15 @@ const Profile = (() => {
   // ── Avatar ────────────────────────────────────────────────────────
   let _cropper = null;
 
-  function loadAvatar(userId) {
+  function loadAvatar(userId, serverAvatarUrl) {
     const stored = localStorage.getItem(AVATAR_KEY(userId));
-    if (stored) applyAvatarImg(stored);
+    if (stored) {
+      applyAvatarImg(stored);
+    } else if (serverAvatarUrl) {
+      // Cache from server into localStorage for faster loads next time
+      localStorage.setItem(AVATAR_KEY(userId), serverAvatarUrl);
+      applyAvatarImg(serverAvatarUrl);
+    }
     // else: keep default SVG icon already in HTML
   }
 
@@ -157,7 +164,12 @@ const Profile = (() => {
     applyAvatarImg(dataUrl);
     updateSidebarAvatar(dataUrl);
     closeCropModal();
-    Api.showAlert('profile-page-alert', 'Foto de perfil actualizada.', 'success');
+    Api.showAlert('profile-page-alert', 'Guardando foto…', 'info');
+
+    // Persist avatar to server so it loads on any device
+    Api.put(`/users/${user.id}`, { avatarUrl: dataUrl })
+      .then(() => Api.showAlert('profile-page-alert', 'Foto de perfil actualizada.', 'success'))
+      .catch(() => Api.showAlert('profile-page-alert', 'Foto guardada localmente, pero no se pudo sincronizar con el servidor.', 'error'));
   }
 
   function compressAndSaveAvatar(file) {

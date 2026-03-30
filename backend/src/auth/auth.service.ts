@@ -42,6 +42,7 @@ export class AuthService {
         currency: true,
         age: true,
         monthlyIncome: true,
+        avatarUrl: true,
         createdAt: true,
       },
     });
@@ -77,6 +78,7 @@ export class AuthService {
         currency: user.currency,
         age: user.age,
         monthlyIncome: user.monthlyIncome,
+        avatarUrl: user.avatarUrl,
         createdAt: user.createdAt,
       },
       access_token: token,

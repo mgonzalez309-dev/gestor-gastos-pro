@@ -42,6 +42,7 @@ export class UsersService {
         currency: true,
         age: true,
         monthlyIncome: true,
+        avatarUrl: true,
         createdAt: true,
         _count: {
           select: { expenses: true, tickets: true, receivedRecommendations: true },
@@ -74,6 +75,7 @@ export class UsersService {
     if (dto.currency)     data.currency     = dto.currency;
     if (dto.age !== undefined)           data.age           = dto.age;
     if (dto.monthlyIncome !== undefined) data.monthlyIncome = dto.monthlyIncome;
+    if (dto.avatarUrl !== undefined)     data.avatarUrl     = dto.avatarUrl;
 
     return this.prisma.user.update({
       where: { id },
@@ -86,6 +88,7 @@ export class UsersService {
         currency: true,
         age: true,
         monthlyIncome: true,
+        avatarUrl: true,
         updatedAt: true,
       },
     });
