@@ -7,6 +7,7 @@ import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Role } from '@prisma/client';
+import { cloudinary } from '../cloudinary';
 
 @Injectable()
 export class UsersService {
@@ -75,7 +76,27 @@ export class UsersService {
     if (dto.currency)     data.currency     = dto.currency;
     if (dto.age !== undefined)           data.age           = dto.age;
     if (dto.monthlyIncome !== undefined) data.monthlyIncome = dto.monthlyIncome;
-    if (dto.avatarUrl !== undefined)     data.avatarUrl     = dto.avatarUrl;
+
+    // ── Avatar: upload base64 to Cloudinary, store returned HTTPS URL ─────────
+    if (dto.avatarUrl !== undefined) {
+      if (dto.avatarUrl.startsWith('data:')) {
+        // Only upload to Cloudinary if credentials are configured
+        if (process.env.CLOUDINARY_CLOUD_NAME) {
+          const result = await cloudinary.uploader.upload(dto.avatarUrl, {
+            folder:     'avatars',
+            public_id:  `user_${id}`,
+            overwrite:  true,
+          });
+          data.avatarUrl = result.secure_url;
+        } else {
+          // Dev/unconfigured fallback: store base64 directly
+          data.avatarUrl = dto.avatarUrl;
+        }
+      } else {
+        // Already a URL (e.g. Cloudinary HTTPS URL) – keep as-is
+        data.avatarUrl = dto.avatarUrl;
+      }
+    }
 
     return this.prisma.user.update({
       where: { id },

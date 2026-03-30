@@ -55,8 +55,23 @@ const Profile = (() => {
     const stored = localStorage.getItem(AVATAR_KEY(userId));
     if (stored) {
       applyAvatarImg(stored);
+      // Auto-sync: if localStorage has a photo but the server doesn't (pre-fix avatars),
+      // push it to the server now so other devices can see it.
+      if (!serverAvatarUrl) {
+        Api.put(`/users/${userId}`, { avatarUrl: stored })
+          .then((res) => {
+            if (res && res.avatarUrl) {
+              // Replace local base64 cache with the Cloudinary URL
+              localStorage.setItem(AVATAR_KEY(userId), res.avatarUrl);
+              Api.saveUser({ ...Api.getUser(), avatarUrl: res.avatarUrl });
+              applyAvatarImg(res.avatarUrl);
+              updateSidebarAvatar(res.avatarUrl);
+            }
+          })
+          .catch(() => {});
+      }
     } else if (serverAvatarUrl) {
-      // Cache from server into localStorage for faster loads next time
+      // Cache server URL locally for faster loads next time
       localStorage.setItem(AVATAR_KEY(userId), serverAvatarUrl);
       applyAvatarImg(serverAvatarUrl);
     }
@@ -160,16 +175,29 @@ const Profile = (() => {
 
     const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
     const user = Api.getUser();
-    localStorage.setItem(AVATAR_KEY(user.id), dataUrl);
+
+    // Show immediately from local base64
     applyAvatarImg(dataUrl);
     updateSidebarAvatar(dataUrl);
     closeCropModal();
-    Api.showAlert('profile-page-alert', 'Guardando foto…', 'info');
+    Api.showAlert('profile-page-alert', 'Subiendo foto…', 'info');
 
-    // Persist avatar to server so it loads on any device
+    // Upload to server → Cloudinary → returns HTTPS URL
     Api.put(`/users/${user.id}`, { avatarUrl: dataUrl })
-      .then(() => Api.showAlert('profile-page-alert', 'Foto de perfil actualizada.', 'success'))
-      .catch(() => Api.showAlert('profile-page-alert', 'Foto guardada localmente, pero no se pudo sincronizar con el servidor.', 'error'));
+      .then((res) => {
+        const finalUrl = res?.avatarUrl || dataUrl;
+        // Cache the Cloudinary URL (or base64 fallback) locally
+        localStorage.setItem(AVATAR_KEY(user.id), finalUrl);
+        Api.saveUser({ ...Api.getUser(), avatarUrl: finalUrl });
+        applyAvatarImg(finalUrl);
+        updateSidebarAvatar(finalUrl);
+        Api.showAlert('profile-page-alert', 'Foto de perfil actualizada.', 'success');
+      })
+      .catch(() => {
+        // Keep base64 in localStorage as fallback for this device only
+        localStorage.setItem(AVATAR_KEY(user.id), dataUrl);
+        Api.showAlert('profile-page-alert', 'No se pudo sincronizar la foto con el servidor.', 'error');
+      });
   }
 
   function compressAndSaveAvatar(file) {
