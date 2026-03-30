@@ -13,6 +13,8 @@ const UIComponents = (() => {
       if (isActive) link.setAttribute('aria-current', 'page');
       else link.removeAttribute('aria-current');
     });
+
+    if (window.lucide) lucide.createIcons({ node: slot });
   }
 
   function renderContactRows(containerId, rows) {

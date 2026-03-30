@@ -89,12 +89,14 @@ const Api = (() => {
       throw new Error('No se pudo conectar con el servidor. Verificá que el backend esté corriendo.');
     }
 
-    // Auto-logout on 401
-    if (response.status === 401) {
+    // Auto-logout on 401 – but NOT during login/register (those return 401 for wrong credentials)
+    const isAuthEndpoint = path === '/auth/login' || path === '/auth/register';
+    if (response.status === 401 && !isAuthEndpoint) {
       clearToken();
-      if (!window.location.pathname.endsWith('index.html') &&
-          !window.location.pathname.endsWith('register.html') &&
-          window.location.pathname !== '/') {
+      const p = window.location.pathname;
+      const isAuthPage = p.endsWith('index.html') || p.endsWith('register.html') ||
+                         p === '/login' || p === '/register' || p === '/';
+      if (!isAuthPage) {
         window.location.href = 'index.html';
       }
       throw new Error('Sesión expirada. Por favor iniciá sesión nuevamente.');

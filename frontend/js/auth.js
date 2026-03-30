@@ -68,7 +68,7 @@ const Auth = (() => {
   }
 
   function applyStoredTheme() {
-    const raw = localStorage.getItem(THEME_KEY) || 'light';
+    const raw = localStorage.getItem(THEME_KEY) || 'dark';
     const current = raw === 'ocean' ? 'light' : raw === 'slate' ? 'dark' : raw;
     localStorage.setItem(THEME_KEY, current);
     document.body.setAttribute('data-theme', current);
@@ -78,7 +78,12 @@ const Auth = (() => {
     localStorage.setItem(THEME_KEY, theme);
     document.body.setAttribute('data-theme', theme);
     const indicator = document.getElementById('theme-toggle-indicator');
-    if (indicator) indicator.textContent = theme === 'light' ? 'Claro' : 'Oscuro';
+    if (indicator) indicator.textContent = theme === 'dark' ? 'Oscuro' : 'Claro';
+    const iconWrap = document.getElementById('theme-toggle-icon');
+    if (iconWrap) {
+      iconWrap.setAttribute('data-lucide', theme === 'dark' ? 'moon' : 'sun');
+      if (window.lucide) lucide.createIcons({ node: iconWrap.parentElement });
+    }
     document.dispatchEvent(new CustomEvent('app-theme-changed', { detail: { theme } }));
   }
 
@@ -113,20 +118,23 @@ const Auth = (() => {
     const footer = document.querySelector('.sidebar-footer');
     if (!footer || document.getElementById('theme-toggle-btn')) return;
 
-    const raw = localStorage.getItem(THEME_KEY) || 'light';
+    const raw = localStorage.getItem(THEME_KEY) || 'dark';
     const theme = raw === 'ocean' ? 'light' : raw === 'slate' ? 'dark' : raw;
     const wrap = document.createElement('div');
     wrap.className = 'theme-switch-wrap';
     wrap.innerHTML = `
       <button class="btn btn-ghost btn-sm theme-toggle-btn" id="theme-toggle-btn" type="button" title="Cambiar tema">
-        Tema: <span id="theme-toggle-indicator">${theme === 'light' ? 'Claro' : 'Oscuro'}</span>
+        <i data-lucide="${theme === 'dark' ? 'moon' : 'sun'}" id="theme-toggle-icon"></i>
+        <span id="theme-toggle-indicator">${theme === 'dark' ? 'Oscuro' : 'Claro'}</span>
       </button>`;
 
     footer.insertAdjacentElement('afterbegin', wrap);
 
+    if (window.lucide) lucide.createIcons({ node: wrap });
+
     const btn = document.getElementById('theme-toggle-btn');
     btn?.addEventListener('click', () => {
-      const rawCurrent = localStorage.getItem(THEME_KEY) || 'light';
+      const rawCurrent = localStorage.getItem(THEME_KEY) || 'dark';
       const current = rawCurrent === 'ocean' ? 'light' : rawCurrent === 'slate' ? 'dark' : rawCurrent;
       const next = current === 'light' ? 'dark' : 'light';
       setTheme(next);

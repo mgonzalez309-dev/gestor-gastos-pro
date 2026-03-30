@@ -48,6 +48,8 @@ const Profile = (() => {
   }
 
   // ── Avatar ────────────────────────────────────────────────────────
+  let _cropper = null;
+
   function loadAvatar(userId) {
     const stored = localStorage.getItem(AVATAR_KEY(userId));
     if (stored) applyAvatarImg(stored);
@@ -57,44 +59,110 @@ const Profile = (() => {
   function applyAvatarImg(dataUrl) {
     const el = document.getElementById('profile-avatar-display');
     if (!el) return;
-    el.innerHTML = `<img src="${dataUrl}" alt="Avatar" />`;
+    el.innerHTML = `<img src="${dataUrl}" alt="Avatar" style="width:100%;height:100%;object-fit:cover" />`;
   }
 
   function bindAvatarInput() {
     const input = document.getElementById('profile-avatar-input');
-    input?.addEventListener('change', (e) => {
+    input?.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
-      compressAndSaveAvatar(file);
+      // Reset input so the same file can be selected again later
+      input.value = '';
+
+      let blob = file;
+
+      // ── HEIC → JPEG conversion ─────────────────────────────────
+      const isHeic = file.type === 'image/heic' ||
+                     file.type === 'image/heif' ||
+                     /\.heic$/i.test(file.name) ||
+                     /\.heif$/i.test(file.name);
+
+      if (isHeic) {
+        try {
+          Api.showAlert('profile-page-alert', 'Convirtiendo archivo HEIC…', 'info');
+          blob = await window.heic2any({ blob: file, toType: 'image/jpeg', quality: 0.92 });
+          // heic2any may return an array if multiple images
+          if (Array.isArray(blob)) blob = blob[0];
+        } catch {
+          Api.showAlert('profile-page-alert', 'No se pudo convertir el archivo HEIC.', 'error');
+          return;
+        }
+      }
+
+      // ── Open crop modal ────────────────────────────────────────
+      const url = URL.createObjectURL(blob);
+      openCropModal(url);
     });
   }
 
-  function compressAndSaveAvatar(file) {
-    const user = Api.getUser();
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const SIZE = 160;
-        canvas.width = SIZE;
-        canvas.height = SIZE;
-        const ctx = canvas.getContext('2d');
-        // Crop to square, then resize
-        const minSide = Math.min(img.width, img.height);
-        const sx = (img.width  - minSide) / 2;
-        const sy = (img.height - minSide) / 2;
-        ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, SIZE, SIZE);
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
-        localStorage.setItem(AVATAR_KEY(user.id), dataUrl);
-        applyAvatarImg(dataUrl);
-        // Also update sidebar avatar immediately
-        updateSidebarAvatar(dataUrl);
-        Api.showAlert('profile-page-alert', 'Foto actualizada.', 'success');
-      };
-      img.src = ev.target.result;
+  function openCropModal(imageUrl) {
+    const modal    = document.getElementById('avatar-crop-modal');
+    const img      = document.getElementById('avatar-crop-image');
+    if (!modal || !img) return;
+
+    img.src = imageUrl;
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+
+    // Destroy any previous instance
+    if (_cropper) { _cropper.destroy(); _cropper = null; }
+
+    img.onload = () => {
+      _cropper = new Cropper(img, {
+        aspectRatio: 1,
+        viewMode: 1,
+        dragMode: 'move',
+        autoCropArea: 0.9,
+        restore: false,
+        guides: false,
+        center: true,
+        highlight: false,
+        cropBoxMovable: false,
+        cropBoxResizable: false,
+        toggleDragModeOnDblclick: false,
+        ready() {
+          // Style the crop box as a circle via CSS class
+          const cropBox = modal.querySelector('.cropper-crop-box');
+          if (cropBox) cropBox.style.borderRadius = '50%';
+          const viewBox = modal.querySelector('.cropper-view-box');
+          if (viewBox) viewBox.style.borderRadius = '50%';
+        },
+      });
     };
-    reader.readAsDataURL(file);
+
+    // Wire close / cancel buttons each time modal opens (idempotent via once)
+    document.getElementById('avatar-crop-close')?.addEventListener('click', closeCropModal, { once: true });
+    document.getElementById('avatar-crop-cancel')?.addEventListener('click', closeCropModal, { once: true });
+    document.getElementById('avatar-crop-save')?.addEventListener('click', saveCroppedAvatar, { once: true });
+  }
+
+  function closeCropModal() {
+    const modal = document.getElementById('avatar-crop-modal');
+    if (modal) modal.classList.add('hidden');
+    document.body.style.overflow = '';
+    if (_cropper) { _cropper.destroy(); _cropper = null; }
+    const img = document.getElementById('avatar-crop-image');
+    if (img) { URL.revokeObjectURL(img.src); img.src = ''; }
+  }
+
+  function saveCroppedAvatar() {
+    if (!_cropper) return;
+    const canvas = _cropper.getCroppedCanvas({ width: 280, height: 280, imageSmoothingQuality: 'high' });
+    if (!canvas) return;
+
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+    const user = Api.getUser();
+    localStorage.setItem(AVATAR_KEY(user.id), dataUrl);
+    applyAvatarImg(dataUrl);
+    updateSidebarAvatar(dataUrl);
+    closeCropModal();
+    Api.showAlert('profile-page-alert', 'Foto de perfil actualizada.', 'success');
+  }
+
+  function compressAndSaveAvatar(file) {
+    // Legacy fallback — no longer called directly; kept for safety
+    bindAvatarInput();
   }
 
   function updateSidebarAvatar(dataUrl) {

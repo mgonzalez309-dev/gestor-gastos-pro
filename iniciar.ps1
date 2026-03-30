@@ -1,11 +1,11 @@
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 
-# ── Matar instancias previas en los puertos 4500 y 5500 ──────────────────────
+# ── Matar instancias previas en los puertos 3000, 4500, 5555 ─────────────────
 Write-Host "Liberando puertos..." -ForegroundColor Yellow
-Get-NetTCPConnection -LocalPort 4500 -ErrorAction SilentlyContinue |
-    ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }
-Get-NetTCPConnection -LocalPort 5500 -ErrorAction SilentlyContinue |
-    ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }
+foreach ($port in @(3000, 4500, 5555)) {
+    Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue |
+        ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }
+}
 Start-Sleep -Seconds 1
 
 # ── Backend (NestJS en puerto 4500) ──────────────────────────────────────────
@@ -28,22 +28,29 @@ if ($listening) {
     Write-Host "El backend tardó más de lo esperado, continuando igual..." -ForegroundColor Red
 }
 
-# ── Frontend (http-server en puerto 5500) ────────────────────────────────────
-Write-Host "Iniciando Frontend en http://localhost:5500 ..." -ForegroundColor Cyan
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$root\frontend'; powershell -NoProfile -ExecutionPolicy Bypass -File .\start-frontend-safe.ps1"
+# ── Frontend (Node/Express en puerto 3000) ───────────────────────────────────
+Write-Host "Iniciando Frontend en http://localhost:3000 ..." -ForegroundColor Cyan
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$root\frontend'; node server.js"
 
-Start-Sleep -Seconds 3
+Start-Sleep -Seconds 2
+
+# ── Prisma Studio (puerto 5555) ───────────────────────────────────────────────
+Write-Host "Iniciando Prisma Studio en http://localhost:5555 ..." -ForegroundColor Cyan
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$root\backend'; npx prisma studio"
+
+Start-Sleep -Seconds 2
 
 # ── Abrir el navegador ───────────────────────────────────────────────────────
 Write-Host "Abriendo el navegador..." -ForegroundColor Cyan
-Start-Process "http://localhost:5500/index.html"
+Start-Process "http://localhost:3000/landing"
 
 Write-Host ""
 Write-Host "============================================" -ForegroundColor Green
 Write-Host "  GastosApp corriendo!" -ForegroundColor Green
-Write-Host "  Frontend : http://localhost:5500/index.html" -ForegroundColor White
-Write-Host "  Backend  : http://localhost:4500/api" -ForegroundColor White
-Write-Host "  Swagger  : http://localhost:4500/docs" -ForegroundColor White
+Write-Host "  Frontend      : http://localhost:3000" -ForegroundColor White
+Write-Host "  Backend       : http://localhost:4500/api" -ForegroundColor White
+Write-Host "  Swagger       : http://localhost:4500/docs" -ForegroundColor White
+Write-Host "  Prisma Studio : http://localhost:5555" -ForegroundColor White
 Write-Host "============================================" -ForegroundColor Green
 
 

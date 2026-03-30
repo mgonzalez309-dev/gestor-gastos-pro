@@ -6,10 +6,12 @@
   <link rel="icon" type="image/png" href="/assets/logo.png" />
   <title>Crear cuenta – GastosApp</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="css/design-tokens.css" />
   <link rel="stylesheet" href="css/layout.css" />
   <link rel="stylesheet" href="css/components.css" />
   <link rel="stylesheet" href="css/dashboard.css" />
+  <link rel="stylesheet" href="css/auth.css" />
 </head>
 <body class="auth-page">
 
@@ -50,6 +52,8 @@ empieza hoy</h1>
     <!-- ── Right: Form panel ─────────────────────────────── -->
     <div class="auth-form-panel">
       <div class="auth-form-inner">
+
+        <a href="landing.html" class="auth-back-link">← Volver al inicio</a>
 
         <div class="auth-form-header">
           <div class="auth-form-logo">
@@ -124,7 +128,7 @@ empieza hoy</h1>
             <span class="form-error" id="confirm-password-error"></span>
           </div>
 
-          <button type="submit" id="register-btn" class="btn btn-primary btn-full" style="margin-top:4px">
+          <button type="submit" id="register-btn" class="btn btn-primary btn-full">
             <span class="btn-text">Crear cuenta</span>
             <span class="btn-spinner hidden">⏳</span>
           </button>

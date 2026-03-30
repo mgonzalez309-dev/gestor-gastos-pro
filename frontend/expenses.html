@@ -10,6 +10,8 @@
   <link rel="stylesheet" href="css/layout.css" />
   <link rel="stylesheet" href="css/components.css" />
   <link rel="stylesheet" href="css/dashboard.css" />
+  <link rel="stylesheet" href="css/app.css" />
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body class="dashboard-grid-shell" data-page="expenses">
   <div id="sidebar-slot" class="left-sidebar"></div>
@@ -135,9 +137,9 @@
       <section>
         <h4 class="sidebar-section-title">Quick Actions</h4>
         <div class="quick-actions">
-          <button class="btn btn-ghost action-btn" id="btn-export-excel">Exportar gastos (Excel)</button>
-          <button class="btn btn-ghost action-btn" id="btn-export-pdf">Exportar gastos (PDF)</button>
-          <button class="btn btn-ghost action-btn" id="btn-generate-report">Crear reporte</button>
+          <button class="btn btn-ghost action-btn" id="btn-export-excel"><i data-lucide="table-2"></i> Exportar Excel</button>
+          <button class="btn btn-ghost action-btn" id="btn-export-pdf"><i data-lucide="file-text"></i> Exportar PDF</button>
+          <button class="btn btn-ghost action-btn" id="btn-generate-report"><i data-lucide="bar-chart-2"></i> Crear reporte</button>
         </div>
       </section>
     </div>
@@ -325,6 +327,7 @@
       await UIComponents.loadSidebar('sidebar-slot', 'expenses');
       Auth.requireAuth();
       Expenses.init();
+      if (window.lucide) lucide.createIcons();
     })();
   </script>
 </body>

@@ -6,7 +6,9 @@ const rootDir = __dirname;
 const port = Number(process.env.PORT || 3000);
 
 const htmlRoutes = {
-  '/': 'index.html',
+  '/': 'landing.html',
+  '/landing': 'landing.html',
+  '/login': 'index.html',
   '/index': 'index.html',
   '/register': 'register.html',
   '/dashboard': 'dashboard.html',

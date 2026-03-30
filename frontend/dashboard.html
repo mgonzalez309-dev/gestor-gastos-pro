@@ -10,6 +10,8 @@
   <link rel="stylesheet" href="css/layout.css" />
   <link rel="stylesheet" href="css/components.css" />
   <link rel="stylesheet" href="css/dashboard.css" />
+  <link rel="stylesheet" href="css/app.css" />
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 </head>
 <body class="dashboard-grid-shell" data-page="dashboard">
@@ -196,15 +198,15 @@
       <section>
         <h4 class="sidebar-section-title">Acciones Rápidas</h4>
         <div class="quick-actions">
-          <button class="btn btn-primary action-btn" id="rs-btn-new-expense" onclick="Expenses && Expenses.init ? document.getElementById('btn-new-expense') && document.getElementById('btn-new-expense').click() : (window.location='expenses.html')">
+          <button class="btn btn-primary action-btn" id="rs-btn-new-expense">
             <svg viewBox="0 0 24 24" class="action-btn-icon" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
             Nuevo Gasto
           </button>
-          <button class="btn btn-ghost action-btn" onclick="window.location='upload-ticket.html'">
+          <button class="btn btn-ghost action-btn" id="rs-btn-scan-ticket">
             <svg viewBox="0 0 24 24" class="action-btn-icon" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             Escanear Ticket
           </button>
-          <button class="btn btn-ghost action-btn" onclick="window.location='expenses.html'">
+          <button class="btn btn-ghost action-btn" id="rs-btn-view-expenses">
             <svg viewBox="0 0 24 24" class="action-btn-icon" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
             Ver Gastos
           </button>
@@ -285,6 +287,19 @@
 
       Auth.requireAuth();
       Dashboard.init();
+
+      // Quick action buttons
+      document.getElementById('rs-btn-new-expense')?.addEventListener('click', () => {
+        window.location.href = 'expenses.html?new=1';
+      });
+      document.getElementById('rs-btn-scan-ticket')?.addEventListener('click', () => {
+        window.location.href = 'upload-ticket.html';
+      });
+      document.getElementById('rs-btn-view-expenses')?.addEventListener('click', () => {
+        window.location.href = 'expenses.html';
+      });
+
+      if (window.lucide) lucide.createIcons();
     })();
   </script>
 </body>

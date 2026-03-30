@@ -6,10 +6,12 @@
   <link rel="icon" type="image/png" href="/assets/logo.png" />
   <title>Iniciar sesión – GastosApp</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="css/design-tokens.css" />
   <link rel="stylesheet" href="css/layout.css" />
   <link rel="stylesheet" href="css/components.css" />
   <link rel="stylesheet" href="css/dashboard.css" />
+  <link rel="stylesheet" href="css/auth.css" />
 </head>
 <body class="auth-page">
 
@@ -21,7 +23,7 @@
         <div class="auth-logo-mark">GA</div>
         <h1 class="auth-brand-title">Gestioná tus<br>finanzas con IA</h1>
         <p class="auth-brand-subtitle">
-          Registrá gastos, anali zá tus hábitos y tomá mejores decisiones
+          Registrá gastos, analizá tus hábitos y tomá mejores decisiones
           financieras con inteligencia artificial.
         </p>
         <ul class="auth-features">
@@ -48,6 +50,8 @@
     <!-- ── Right: Form panel ─────────────────────────────── -->
     <div class="auth-form-panel">
       <div class="auth-form-inner">
+
+        <a href="landing.html" class="auth-back-link">← Volver al inicio</a>
 
         <div class="auth-form-header">
           <div class="auth-form-logo">
@@ -92,7 +96,7 @@
             <span class="form-error" id="password-error"></span>
           </div>
 
-          <button type="submit" id="login-btn" class="btn btn-primary btn-full" style="margin-top:4px">
+          <button type="submit" id="login-btn" class="btn btn-primary btn-full">
             <span class="btn-text">Iniciar sesión</span>
             <span class="btn-spinner hidden">⏳</span>
           </button>

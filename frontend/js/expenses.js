@@ -37,6 +37,12 @@ const Expenses = (() => {
     // Set today as default date in form
     const dateInput = document.getElementById('exp-date');
     if (dateInput) dateInput.value = Api.todayISO();
+
+    // Auto-open new expense modal if navigated with ?new=1
+    if (new URLSearchParams(window.location.search).get('new') === '1') {
+      // Small delay so the page finishes rendering first
+      setTimeout(openCreate, 120);
+    }
   }
 
   // ── Load expenses ──────────────────────────────────────────────────

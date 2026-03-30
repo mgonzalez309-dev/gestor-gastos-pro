@@ -10,6 +10,9 @@
   <link rel="stylesheet" href="css/layout.css" />
   <link rel="stylesheet" href="css/components.css" />
   <link rel="stylesheet" href="css/dashboard.css" />
+  <link rel="stylesheet" href="css/app.css" />
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" />
 </head>
 <body class="dashboard-grid-shell" data-page="profile">
   <div id="sidebar-slot" class="left-sidebar"></div>
@@ -37,7 +40,7 @@
                 </svg>
               </div>
               <div class="profile-avatar-overlay">Cambiar foto</div>
-              <input type="file" id="profile-avatar-input" accept="image/*" class="hidden" />
+              <input type="file" id="profile-avatar-input" accept="image/*,.heic,.HEIC" class="hidden" />
             </label>
             <p class="profile-avatar-hint">Haz clic en el avatar para cambiar tu foto</p>
           </div>
@@ -101,7 +104,7 @@
         <div class="profile-side-col">
           <div class="card budget-config-card">
             <div class="card-title-row">
-              <span class="card-title-icon">IN</span>
+              <span class="card-title-icon"><i data-lucide="wallet"></i></span>
               <h3 class="card-title">Presupuesto mensual</h3>
             </div>
             <p class="card-subtitle">Configura tu ingreso mensual y ve tu disponible.</p>
@@ -122,7 +125,7 @@
 
           <div class="card budget-summary-card" id="budget-summary-card">
             <div class="budget-summary-header">
-              <span class="budget-summary-icon">SM</span>
+              <span class="budget-summary-icon"><i data-lucide="calendar-days"></i></span>
               <h3 class="card-title">Este mes</h3>
             </div>
 
@@ -160,16 +163,41 @@
     </div>
   </aside>
 
+  <!-- Avatar crop modal -->
+  <div class="modal hidden" id="avatar-crop-modal" role="dialog" aria-modal="true" aria-labelledby="avatar-crop-title">
+    <div class="modal-box" style="max-width:460px;width:100%">
+      <div class="modal-header" style="display:flex;align-items:center;justify-content:space-between">
+        <h3 id="avatar-crop-title">Ajustar foto de perfil</h3>
+        <button class="modal-close" id="avatar-crop-close" aria-label="Cerrar">✕</button>
+      </div>
+      <div class="modal-body" style="padding:1.25rem">
+        <div id="avatar-crop-container" style="height:320px;overflow:hidden;border-radius:12px;background:#0a0f1b">
+          <img id="avatar-crop-image" alt="Recortar foto" style="max-width:100%;display:block" />
+        </div>
+        <p style="font-size:0.78rem;color:rgba(255,255,255,0.35);margin-top:0.75rem;text-align:center">
+          Arrastrá para encuadrar · Pellizcá o usá la rueda para hacer zoom
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost btn-sm" id="avatar-crop-cancel">Cancelar</button>
+        <button class="btn btn-primary btn-sm" id="avatar-crop-save">Guardar foto</button>
+      </div>
+    </div>
+  </div>
+
   <script src="js/runtime-config.js"></script>
   <script src="js/api.js"></script>
   <script src="js/components.js"></script>
   <script src="js/auth.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
   <script src="js/profile.js"></script>
   <script>
     (async () => {
       await UIComponents.loadSidebar('sidebar-slot', 'profile');
       Auth.requireAuth();
       Profile.init();
+      if (window.lucide) lucide.createIcons();
     })();
   </script>
 </body>
