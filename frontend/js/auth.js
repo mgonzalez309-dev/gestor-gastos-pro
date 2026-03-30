@@ -18,7 +18,7 @@ const Auth = (() => {
 
     if (nameEl)   nameEl.textContent   = user.name || 'Usuario';
 
-    // Avatar: localStorage (fastest) → server avatarUrl → initials
+    // Avatar: localStorage (fastest) → stored user.avatarUrl → async server fetch
     if (avatarEl) {
       const storedAvatar = localStorage.getItem(`avatar_${user.id}`);
       if (storedAvatar) {
@@ -28,7 +28,16 @@ const Auth = (() => {
         localStorage.setItem(`avatar_${user.id}`, user.avatarUrl);
         avatarEl.innerHTML = `<img src="${user.avatarUrl}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />`;
       } else {
+        // Show initials immediately, then fetch fresh from server (handles stale sessions)
         avatarEl.textContent = Api.getInitials(user.name);
+        Api.get(`/users/${user.id}`).then((fresh) => {
+          if (fresh && fresh.avatarUrl) {
+            localStorage.setItem(`avatar_${user.id}`, fresh.avatarUrl);
+            Api.saveUser({ ...Api.getUser(), avatarUrl: fresh.avatarUrl });
+            const el = document.getElementById('user-avatar-initials');
+            if (el) el.innerHTML = `<img src="${fresh.avatarUrl}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />`;
+          }
+        }).catch(() => {});
       }
     }
 
