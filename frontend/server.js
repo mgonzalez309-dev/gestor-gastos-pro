@@ -26,13 +26,17 @@ app.get('/js/runtime-config.js', (_req, res) => {
   );
 });
 
-app.use(express.static(rootDir, { extensions: ['html'] }));
-
+// Named HTML routes — registered BEFORE static middleware so that '/'
+// resolves to landing.html instead of Express auto-serving index.html.
 Object.entries(htmlRoutes).forEach(([route, file]) => {
   app.get(route, (_req, res) => {
     res.sendFile(path.join(rootDir, file));
   });
 });
+
+// index:false prevents Express from auto-serving index.html for '/'
+// (which would send the login page instead of landing.html).
+app.use(express.static(rootDir, { extensions: ['html'], index: false }));
 
 app.listen(port, () => {
   console.log(`Frontend running on http://localhost:${port}`);
