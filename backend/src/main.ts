@@ -70,6 +70,16 @@ async function bootstrap() {
   // ── Global prefix ──────────────────────────────────────────────────────────
   app.setGlobalPrefix('api');
 
+  // ── Root redirect → frontend landing ──────────────────────────────────────
+  const frontendUrl = (process.env.FRONTEND_URL || '').replace(/\/$/, '');
+  app.use('/', (req: any, res: any, next: any) => {
+    if (req.path === '/' && req.method === 'GET') {
+      const target = frontendUrl || '/api';
+      return res.redirect(302, target);
+    }
+    next();
+  });
+
   // ── Swagger / OpenAPI (solo en desarrollo) ────────────────────────────────
   if (!isProduction) {
     const swaggerConfig = new DocumentBuilder()
