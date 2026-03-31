@@ -262,6 +262,7 @@ body.dashboard-grid-shell {
 .overlay {
   background: rgba(0, 0, 0, 0.6) !important;
   backdrop-filter: blur(4px);
+  z-index: 199;
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -1545,8 +1546,9 @@ canvas { display: block; }
     z-index: 200;
     left: -100%;
     top: 0;
-    width: 260px;
+    width: 280px;
     height: 100vh;
+    overflow-y: auto;
     transition: left 0.3s ease;
   }
 
@@ -1555,16 +1557,68 @@ canvas { display: block; }
     box-shadow: 0 0 40px rgba(0, 0, 0, 0.7);
   }
 
-  .two-column-layout {
-    grid-template-columns: 1fr;
+  /* Layout */
+  .two-column-layout { grid-template-columns: 1fr; }
+  .crm-content-grid  { grid-template-columns: 1fr !important; }
+  .chart-card--full .merchant-list { grid-template-columns: 1fr !important; }
+
+  /* Page header */
+  .page-header.glass-card {
+    padding: 0.75rem 1rem !important;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .page-title   { font-size: 1.1rem !important; }
+  .page-subtitle { font-size: 0.78rem !important; }
+
+  /* Cards padding */
+  .chart-card,
+  .card,
+  .section,
+  .filter-bar,
+  .table-wrapper,
+  .modal-box {
+    padding: var(--space-4) !important;
   }
 
-  .page-title { font-size: 1.25rem !important; }
+  /* Tables: horizontal scroll so columns don't squish */
+  .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .table { min-width: 540px; }
+
+  /* Filter bar: stack vertically */
+  .filter-bar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: var(--space-3) !important;
+  }
+  .filter-bar .form-input,
+  .filter-bar select { min-width: 0 !important; }
+
+  /* Modal: full-width on small screens */
+  .modal-box { max-width: 100% !important; margin: 0.5rem !important; }
+
+  /* Steps indicator */
+  .steps-indicator { padding: var(--space-3) !important; gap: 0.25rem !important; }
+  .step-circle { width: 1.8rem !important; height: 1.8rem !important; font-size: 0.75rem !important; }
+  .step span { font-size: 0.7rem !important; }
+
+  /* Stats: reduce font size */
+  .stat-value { font-size: 1.15rem !important; }
 }
 
 @media (max-width: 600px) {
   .cards-grid { grid-template-columns: 1fr 1fr !important; }
   .charts-grid { grid-template-columns: 1fr !important; }
+
+  /* Header actions: wrap or hide secondary items */
+  .header-actions { gap: var(--space-2) !important; }
+  .header-actions .btn-ghost:not(:first-child) { display: none; }
+
+  /* Pagination: tighter */
+  .pagination { gap: 2px !important; }
+
+  /* Shell padding  */
+  .dashboard-grid-shell { gap: 0.75rem !important; padding: 0.5rem !important; }
 }
 
 /* ══════════════════════════════════════════════════════════════════

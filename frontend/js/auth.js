@@ -63,6 +63,11 @@ const Auth = (() => {
     closeBtn?.addEventListener('click', closeSidebar);
     overlay?.addEventListener('click',  closeSidebar);
 
+    // Close sidebar when a nav link is tapped on mobile
+    sidebar?.querySelectorAll('.nav-link').forEach((link) => {
+      link.addEventListener('click', closeSidebar);
+    });
+
     // Click on user info → navigate to profile page
     const userInfoEl = document.getElementById('sidebar-user');
     if (userInfoEl) {

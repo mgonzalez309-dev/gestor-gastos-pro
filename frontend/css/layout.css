@@ -68,6 +68,13 @@
   }
 
   .left-sidebar {
-    display: none;
+    /*
+     * IMPORTANT: do NOT use display:none here.
+     * display:none on a parent hides fixed-position children too,
+     * which would permanently break the sidebar drawer on mobile.
+     * display:contents removes this element from the grid layout
+     * (no row/gap created) while keeping the fixed sidebar in the DOM.
+     */
+    display: contents;
   }
 }
