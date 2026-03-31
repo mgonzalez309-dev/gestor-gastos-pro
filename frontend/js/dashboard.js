@@ -20,6 +20,7 @@ const Dashboard = (() => {
       loadRecentExpenses(),
       loadRecommendations(),
       loadSidebarMovements(),
+      loadRecentTickets(),
     ]);
 
     document.addEventListener('app-theme-changed', () => {
@@ -29,6 +30,7 @@ const Dashboard = (() => {
       renderMonthlyChart(cachedAnalytics.monthlyData);
       renderMerchantList(cachedAnalytics.topMerchants);
       renderPaceCard(cachedAnalytics);
+      renderCategoryBars(cachedAnalytics.byCategory, cachedAnalytics.currentMonth?.total);
     });
   }
 
@@ -43,6 +45,7 @@ const Dashboard = (() => {
       renderMerchantList(data.topMerchants);
       renderSidebarInsights(data);
       renderPaceCard(data);
+      renderCategoryBars(data.byCategory, data.currentMonth?.total);
 
       // Show unusual expenses alert if any
       if (data.unusualExpenses && data.unusualExpenses.length > 0) {
@@ -286,9 +289,9 @@ const Dashboard = (() => {
     if (!container) return;
 
     const CATEGORY_ICONS = {
-      FOOD: '🛒', TRANSPORT: '🚗', ENTERTAINMENT: '🎬',
-      HEALTH: '🏥', EDUCATION: '📚', CLOTHING: '👗',
-      TECHNOLOGY: '💻', HOME: '🏠', SERVICES: '🔧', OTHER: '📋',
+      FOOD: 'shopping-cart', TRANSPORT: 'car', ENTERTAINMENT: 'film',
+      HEALTH: 'heart', EDUCATION: 'book-open', CLOTHING: 'tag',
+      TECHNOLOGY: 'monitor', HOME: 'home', SERVICES: 'wrench', OTHER: 'package',
     };
 
     function timeAgo(dateStr) {
@@ -313,13 +316,14 @@ const Dashboard = (() => {
 
       container.innerHTML = expenses.map((e) => `
         <div class="movement-item">
-          <span class="movement-icon">${CATEGORY_ICONS[e.category] || '📋'}</span>
+          <span class="movement-icon"><i data-lucide="${CATEGORY_ICONS[e.category] || 'package'}"></i></span>
           <div class="movement-info">
             <span class="movement-name">${escapeHtml(e.merchant)}</span>
             <span class="movement-time">${timeAgo(e.date || e.createdAt)}</span>
           </div>
           <span class="movement-amount movement-amount--expense">${Api.formatCurrency(e.amount)}</span>
         </div>`).join('');
+      if (window.lucide) lucide.createIcons();
     } catch (err) {
       container.innerHTML = '<div class="movement-item"><span class="movement-name" style="color:var(--text-muted)">Error al cargar.</span></div>';
     }
@@ -338,7 +342,7 @@ const Dashboard = (() => {
       const pct = Math.round((top.total / data.currentMonth.total) * 100);
       insights.push({
         type: 'info',
-        icon: '💡',
+        icon: 'lightbulb',
         text: `Tu comercio top es <strong>${escapeHtml(top.merchant)}</strong>, concentra el ${pct}% de tus gastos este mes.`,
       });
     }
@@ -348,13 +352,13 @@ const Dashboard = (() => {
       if (data.monthGrowth > 20) {
         insights.push({
           type: 'warn',
-          icon: '⚠️',
+          icon: 'alert-triangle',
           text: `Tus gastos subieron un <strong>+${data.monthGrowth.toFixed(1)}%</strong> respecto al mes anterior.`,
         });
       } else if (data.monthGrowth < -10) {
         insights.push({
           type: 'info',
-          icon: '✅',
+          icon: 'check-circle',
           text: `Bajaste tus gastos un <strong>${Math.abs(data.monthGrowth).toFixed(1)}%</strong> respecto al mes anterior. ¡Bien hecho!`,
         });
       }
@@ -364,21 +368,22 @@ const Dashboard = (() => {
     if (data.unusualExpenses?.length) {
       insights.push({
         type: 'alert',
-        icon: '🔔',
+        icon: 'bell',
         text: `Detectamos <strong>${data.unusualExpenses.length}</strong> gasto${data.unusualExpenses.length > 1 ? 's' : ''} inusual${data.unusualExpenses.length > 1 ? 'es' : ''} este mes.`,
       });
     }
 
     // Fallback
     if (!insights.length) {
-      insights.push({ type: 'info', icon: '💡', text: 'Seguí registrando tus gastos para ver análisis personalizados.' });
+      insights.push({ type: 'info', icon: 'lightbulb', text: 'Seguí registrando tus gastos para ver análisis personalizados.' });
     }
 
     container.innerHTML = insights.map((ins) => `
       <div class="insight-card insight-card--${ins.type}">
-        <span class="insight-icon">${ins.icon}</span>
+        <span class="insight-icon"><i data-lucide="${ins.icon}"></i></span>
         <p class="insight-text">${ins.text}</p>
       </div>`).join('');
+    if (window.lucide) lucide.createIcons();
   }
 
   // ── Unusual alert modal ────────────────────────────────────────────
@@ -457,13 +462,13 @@ const Dashboard = (() => {
 
     let status, icon, desc;
     if (diff > 15) {
-      status = 'elevated'; icon = '⚡';
+      status = 'elevated'; icon = 'zap';
       desc = `Estás gastando más rápido de lo esperado (${diff > 0 ? '+' : ''}${diff}% sobre el ritmo)`;
     } else if (diff < -15) {
-      status = 'low'; icon = '\uD83C\uDF31';
+      status = 'low'; icon = 'trending-down';
       desc = `Estás por debajo del ritmo esperado (${Math.abs(diff)}% de margen)`;
     } else {
-      status = 'normal'; icon = '\uD83D\uDC4C';
+      status = 'normal'; icon = 'check-circle-2';
       desc = `Tu ritmo de gasto está en línea con tu presupuesto`;
     }
 
@@ -471,7 +476,8 @@ const Dashboard = (() => {
     if (card) card.className = `pace-card pace-${status}`;
 
     const descEl = document.getElementById('pace-desc');
-    if (descEl) descEl.textContent = `${icon} ${desc}`;
+    if (descEl) descEl.innerHTML = `<i data-lucide="${icon}" style="width:1em;height:1em;vertical-align:-.15em;margin-right:.3em"></i>${desc}`;
+    if (window.lucide) lucide.createIcons();
 
     // SVG ring (r=34, circumference ≈ 213.6)
     const circumference = 2 * Math.PI * 34;
@@ -502,10 +508,110 @@ const Dashboard = (() => {
     if (diff > 15) {
       const insights = document.getElementById('insights-list');
       if (insights) {
-        const html = `<div class="insight-card insight-card--warn"><span class="insight-icon">⚡</span><p class="insight-text">A este ritmo gastarías <strong>${Api.formatCurrency(projected)}</strong> este mes (${Math.round((projected / income) * 100)}% de tu ingreso).</p></div>`;
+        const html = `<div class="insight-card insight-card--warn"><span class="insight-icon"><i data-lucide="zap"></i></span><p class="insight-text">A este ritmo gastarías <strong>${Api.formatCurrency(projected)}</strong> este mes (${Math.round((projected / income) * 100)}% de tu ingreso).</p></div>`;
         insights.innerHTML = html + insights.innerHTML;
+        if (window.lucide) lucide.createIcons();
       }
     }
+  }
+
+  // ── Últimos tickets escaneados ────────────────────────────────────
+  async function loadRecentTickets() {
+    const container = document.getElementById('dashboard-tickets-list');
+    if (!container) return;
+
+    try {
+      const tickets = await Api.get('/tickets');
+
+      if (!tickets.length) {
+        container.innerHTML = `
+          <div class="empty-state-sm">
+            Aún no subiste tickets. 
+            <a href="upload-ticket.html" style="color:var(--color-primary)">Subir el primero</a>
+          </div>`;
+        return;
+      }
+
+      const baseUrl = Api.BASE_URL.replace('/api', '');
+
+      container.innerHTML = tickets.slice(0, 4).map((t) => `
+        <div class="dashboard-ticket-row">
+          <div class="dashboard-ticket-thumb">
+            <img
+              src="${baseUrl}${t.imageUrl}"
+              alt="Ticket"
+              onerror="this.style.display='none';this.nextElementSibling.style.display='grid'"
+            />
+            <span class="dashboard-ticket-thumb-fallback" style="display:none"><i data-lucide="receipt"></i></span>
+          </div>
+          <div class="dashboard-ticket-info">
+            <span class="dashboard-ticket-merchant">
+              ${t.parsedMerchant ? escapeHtml(t.parsedMerchant) : '<span style="color:var(--text-muted)">Sin procesar</span>'}
+            </span>
+            <span class="dashboard-ticket-date">${Api.formatRelativeDate(t.createdAt)}</span>
+          </div>
+          <span class="dashboard-ticket-amount">
+            ${t.parsedAmount ? Api.formatCurrency(t.parsedAmount) : '—'}
+          </span>
+        </div>`).join('');
+      if (window.lucide) lucide.createIcons();
+    } catch {
+      container.innerHTML = '<div class="empty-state-sm">Error cargando tickets.</div>';
+    }
+  }
+
+  // ── Top categorías del mes (barras reales) ────────────────────────
+  function renderCategoryBars(byCategory, monthTotal) {
+    const container = document.getElementById('dashboard-category-bars');
+    if (!container) return;
+
+    // byCategory comes from /expenses/analytics and is all-time; we want current month
+    // monthTotal is the denominator for percentage
+    if (!byCategory || !byCategory.length) {
+      container.innerHTML = '<div class="empty-state-sm">Sin gastos este mes aún.</div>';
+      return;
+    }
+
+    const total = monthTotal || byCategory.reduce((s, c) => s + (c.total || 0), 0);
+
+    const CATEGORY_META = {
+      FOOD:          { icon: 'shopping-cart', label: 'Alimentación' },
+      TRANSPORT:     { icon: 'car',          label: 'Transporte' },
+      ENTERTAINMENT: { icon: 'film',         label: 'Entretenimiento' },
+      HEALTH:        { icon: 'heart',        label: 'Salud' },
+      EDUCATION:     { icon: 'book-open',    label: 'Educación' },
+      CLOTHING:      { icon: 'tag',          label: 'Ropa' },
+      TECHNOLOGY:    { icon: 'monitor',      label: 'Tecnología' },
+      HOME:          { icon: 'home',         label: 'Hogar' },
+      SERVICES:      { icon: 'wrench',       label: 'Servicios' },
+      OTHER:         { icon: 'package',      label: 'Otros' },
+    };
+
+    const palette = getChartPalette();
+    const top = byCategory.slice(0, 6);
+
+    container.innerHTML = top.map((c, i) => {
+      const pct = total > 0 ? Math.round((c.total / total) * 100) : 0;
+      const color = palette.categories[i % palette.categories.length];
+      const { icon = 'circle', label = c.category } = CATEGORY_META[c.category] || {};
+      return `
+        <div class="dashboard-cat-bar-row">
+          <div class="dashboard-cat-bar-header">
+            <span class="dashboard-cat-bar-label">
+              <i data-lucide="${icon}"></i>${label}
+            </span>
+            <div class="dashboard-cat-bar-meta">
+              <span class="dashboard-cat-bar-amount">${Api.formatCurrency(c.total)}</span>
+              <span class="dashboard-cat-bar-pct">${pct}%</span>
+            </div>
+          </div>
+          <div class="dashboard-cat-bar-track">
+            <div class="dashboard-cat-bar-fill" style="width:${pct}%;background:${color}"></div>
+          </div>
+        </div>`;
+    }).join('');
+
+    if (window.lucide) lucide.createIcons();
   }
 
   function escapeHtml(str = '') {

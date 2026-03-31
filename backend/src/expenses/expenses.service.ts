@@ -40,7 +40,7 @@ export class ExpensesService {
   async findAll(options: FindAllOptions) {
     const { requesterId, requesterRole, category, startDate, endDate } = options;
     const page = options.page || 1;
-    const limit = options.limit || 20;
+    const limit = Math.min(options.limit || 20, 100); // cap at 100 to prevent DoS
     const skip = (page - 1) * limit;
 
     // Users can only see their own expenses; advisors can filter by userId

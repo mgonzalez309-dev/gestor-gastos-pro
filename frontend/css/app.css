@@ -300,6 +300,7 @@ body.dashboard-grid-shell {
   font-size: 1rem;
   place-items: center;
 }
+.sidebar-toggle svg { width: 1.2rem; height: 1.2rem; }
 
 /* ══════════════════════════════════════════════════════════════════
    GLASS CARDS (generic)

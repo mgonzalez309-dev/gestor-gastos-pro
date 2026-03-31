@@ -6,6 +6,7 @@ import {
   IsOptional,
   IsNotEmpty,
   Min,
+  MaxLength,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Category } from '@prisma/client';
@@ -14,6 +15,7 @@ export class CreateExpenseDto {
   @ApiProperty({ example: 'Supermercado La Anónima' })
   @IsString()
   @IsNotEmpty()
+  @MaxLength(200)
   merchant: string;
 
   @ApiProperty({ example: 1250.5 })
@@ -32,6 +34,7 @@ export class CreateExpenseDto {
   @ApiPropertyOptional({ example: 'Compras de la semana' })
   @IsString()
   @IsOptional()
+  @MaxLength(500)
   description?: string;
 
   @ApiPropertyOptional({ description: 'ID del ticket asociado (opcional)' })

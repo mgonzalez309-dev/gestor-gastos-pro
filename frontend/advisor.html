@@ -22,7 +22,7 @@
 
   <main class="main-panel page-stack">
     <header class="page-header glass-card">
-      <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Abrir menu">☰</button>
+      <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Abrir menu"><i data-lucide="menu"></i></button>
       <div>
         <h1 class="page-title">Panel de asesor financiero</h1>
         <p class="page-subtitle">Analiza el comportamiento financiero de tus clientes</p>
@@ -148,6 +148,7 @@
       await UIComponents.loadSidebar('sidebar-slot', 'advisor');
       Auth.requireAuth('ADVISOR');
       Advisor.init();
+      if (window.lucide) lucide.createIcons();
     })();
   </script>
 </body>

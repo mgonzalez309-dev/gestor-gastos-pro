@@ -184,7 +184,7 @@ const Tickets = (() => {
           hint.style.cssText = 'font-size:.78rem;color:var(--color-success);margin-top:.25rem;';
           categorySelect.parentNode.appendChild(hint);
         }
-        hint.textContent = '\uD83E\uDD16 Categoría sugerida automáticamente según el comercio.';
+        hint.textContent = 'Categoría sugerida automáticamente según el comercio.';
       } else {
         const hint = document.getElementById('category-ai-hint');
         if (hint) hint.textContent = '';
@@ -196,8 +196,8 @@ const Tickets = (() => {
     Api.showAlert(
       'ocr-result-alert',
       hasData
-        ? '✅ La IA extrajo datos del ticket. Revisalos y corregí si es necesario.'
-        : '⚠️ No se pudo extraer información automáticamente. Completá el formulario manualmente.',
+        ? 'La IA extrajo datos del ticket. Revisálos y corregí si es necesario.'
+        : 'No se pudo extraer información automáticamente. Completá el formulario manualmente.',
       hasData ? 'success' : 'warning',
     );
   }
@@ -240,7 +240,7 @@ const Tickets = (() => {
         ticketId: ticketId || undefined,
       });
 
-      Api.showAlert(alertEl, '✅ Gasto registrado correctamente.', 'success');
+      Api.showAlert(alertEl, 'Gasto registrado correctamente.', 'success');
       setTimeout(() => { window.location.href = 'expenses.html'; }, 1500);
     } catch (err) {
       Api.showAlert(alertEl, err.message, 'error');
@@ -277,7 +277,7 @@ const Tickets = (() => {
       container.innerHTML = tickets.slice(0, 8).map((t) => `
         <div class="ticket-card" title="Subido el ${Api.formatDate(t.createdAt)}">
           <img src="${Api.BASE_URL.replace('/api','')}${t.imageUrl}" alt="Ticket"
-               onerror="this.src='data:image/svg+xml,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'100\\' height=\\'120\\'><rect width=\\'100\\' height=\\'120\\' fill=\\'%23f1f5f9\\'/><text x=\\'50\\' y=\\'65\\' text-anchor=\\'middle\\' fill=\\'%2394a3b8\\' font-size=\\'30\\'>🧾</text></svg>'
+               onerror="this.src='data:image/svg+xml,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'100\\' height=\\'120\\'><rect width=\\'100\\' height=\\'120\\' fill=\\'%23e2e8f0\\' rx=\\'8\\'/><text x=\\'50\\' y=\\'68\\' text-anchor=\\'middle\\' fill=\\'%2394a3b8\\' font-size=\\'11\\' font-family=\\'sans-serif\\'>Sin imagen</text></svg>'
           " />
           <div class="ticket-card-body">
             <div class="ticket-card-date">${Api.formatRelativeDate(t.createdAt)}</div>

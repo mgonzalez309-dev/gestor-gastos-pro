@@ -6,6 +6,7 @@ import {
   Param,
   UseGuards,
   Request,
+  ForbiddenException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -37,13 +38,20 @@ export class UsersController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Obtener usuario por ID' })
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id') id: string, @Request() req) {
+    // A user can only view their own profile; advisors can view any
+    if (req.user.role !== Role.ADVISOR && req.user.id !== id) {
+      throw new ForbiddenException('No tenés permiso para ver este perfil.');
+    }
     return this.usersService.findOne(id);
   }
 
   @Get(':id/summary')
   @ApiOperation({ summary: 'Resumen financiero de un usuario' })
-  getSummary(@Param('id') id: string) {
+  getSummary(@Param('id') id: string, @Request() req) {
+    if (req.user.role !== Role.ADVISOR && req.user.id !== id) {
+      throw new ForbiddenException('No tenés permiso para ver este resumen.');
+    }
     return this.usersService.getUserSummary(id);
   }
 

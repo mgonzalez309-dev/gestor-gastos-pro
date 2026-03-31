@@ -8,6 +8,17 @@
   grid-column: span 1 / span 1;
 }
 
+/* Ranking de comercios – spans full grid width */
+.chart-card--full {
+  grid-column: 1 / -1;
+}
+
+.chart-card--full .merchant-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2) var(--space-6);
+}
+
 .crm-list {
   display: flex;
   flex-direction: column;
@@ -174,6 +185,7 @@
   flex-shrink: 0;
   background: rgba(255, 255, 255, 0.1);
 }
+.movement-icon svg { width: 1rem; height: 1rem; }
 
 .movement-info {
   display: flex;
@@ -228,7 +240,15 @@
   font-size: 1rem;
   line-height: 1.4;
   flex-shrink: 0;
+  display: grid;
+  place-items: center;
 }
+.insight-icon svg,
+.insight-icon i { width: 1.1rem; height: 1.1rem; }
+
+.insight-card--info  .insight-icon svg { stroke: #3b82f6; }
+.insight-card--warn  .insight-icon svg { stroke: #eab308; }
+.insight-card--alert .insight-icon svg { stroke: #f87171; }
 
 .insight-text {
   font-size: 0.8rem;
@@ -384,3 +404,125 @@ body[data-theme='dark'] .pace-normal   { background: rgba(99,102,241,.13); borde
 body[data-theme='dark'] .pace-ring-bg  { stroke: rgba(255,255,255,.12); }
 body[data-theme='dark'] .pace-bar-track    { background: rgba(255,255,255,.1); }
 body[data-theme='dark'] .pace-bar-expected { background: rgba(255,255,255,.25); }
+
+/* ── Últimos tickets escaneados ─────────────────────────────────── */
+.dashboard-tickets-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.dashboard-ticket-row {
+  display: grid;
+  grid-template-columns: 2.75rem 1fr auto;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-3);
+  background: var(--glass-subtle);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: var(--radius-xl);
+  transition: background .15s;
+}
+
+.dashboard-ticket-thumb {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--glass-subtle);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.dashboard-ticket-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.dashboard-ticket-thumb-fallback { font-size: 1.3rem; }
+
+.dashboard-ticket-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.dashboard-ticket-merchant {
+  font-size: .88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dashboard-ticket-date {
+  font-size: .76rem;
+  color: var(--text-muted);
+}
+.dashboard-ticket-amount {
+  font-size: .9rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  white-space: nowrap;
+}
+
+/* ── Top categorías del mes ──────────────────────────────────────── */
+.dashboard-category-bars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.dashboard-cat-bar-row { display: flex; flex-direction: column; gap: var(--space-1); }
+
+.dashboard-cat-bar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+}
+.dashboard-cat-bar-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: .85rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+.dashboard-cat-bar-label svg {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  opacity: .75;
+}
+.dashboard-cat-bar-meta {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  flex-shrink: 0;
+}
+.dashboard-cat-bar-amount {
+  font-size: .82rem;
+  color: var(--text-muted);
+}
+.dashboard-cat-bar-pct {
+  font-size: .78rem;
+  color: var(--text-muted);
+  width: 2.5rem;
+  text-align: right;
+}
+
+.dashboard-cat-bar-track {
+  height: .45rem;
+  background: var(--glass-subtle);
+  border-radius: 999px;
+  overflow: hidden;
+}
+body[data-theme='dark'] .dashboard-cat-bar-track { background: rgba(255,255,255,.1); }
+
+.dashboard-cat-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width .4s ease;
+  min-width: 2px;
+}

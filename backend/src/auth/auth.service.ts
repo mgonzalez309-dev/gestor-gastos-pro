@@ -57,14 +57,18 @@ export class AuthService {
       where: { email: dto.email },
     });
 
+    // Normalised error: same message for unknown email and wrong password
+    // to prevent user enumeration attacks.
+    const INVALID_CREDENTIALS = 'Correo o contraseña incorrectos.';
+
     if (!user) {
-      throw new UnauthorizedException('No encontramos una cuenta con ese correo.');
+      throw new UnauthorizedException(INVALID_CREDENTIALS);
     }
 
     const passwordMatch = await bcrypt.compare(dto.password, user.password);
 
     if (!passwordMatch) {
-      throw new UnauthorizedException('Contraseña incorrecta.');
+      throw new UnauthorizedException(INVALID_CREDENTIALS);
     }
 
     const token = this.generateToken(user.id, user.email, user.role);

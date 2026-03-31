@@ -79,7 +79,7 @@
           </div>
         </div>
 
-        <div class="chart-card">
+        <div class="chart-card chart-card--full">
           <div class="chart-header">
             <h3 class="chart-title">Ranking de comercios</h3>
           </div>
@@ -122,42 +122,29 @@
       </section>
 
       <section class="crm-content-grid">
+
+        <!-- Últimos tickets escaneados -->
         <article class="card">
           <div class="section-header">
-            <h3 class="card-title">Recent Contacts</h3>
-            <div>
-              <button class="btn btn-ghost btn-sm">Filtrar</button>
-              <button class="btn btn-ghost btn-sm">Export</button>
-            </div>
+            <h3 class="card-title">Últimos tickets escaneados</h3>
+            <a href="upload-ticket.html" class="btn btn-ghost btn-sm">Subir ticket</a>
           </div>
-          <div class="crm-list" id="crm-contact-list"></div>
+          <div id="dashboard-tickets-list" class="dashboard-tickets-list">
+            <div class="empty-state-sm">Cargando...</div>
+          </div>
         </article>
 
+        <!-- Top categorías del mes -->
         <article class="card">
-          <h3 class="card-title">Sales Target</h3>
-          <div class="target-item">
-            <div class="target-row">
-              <span>Monthly target</span>
-              <span>74%</span>
-            </div>
-            <div class="progress-bar-wrapper"><div class="progress-bar" style="width:74%"></div></div>
+          <div class="section-header">
+            <h3 class="card-title">Top categorías del mes</h3>
+            <a href="expenses.html" class="btn btn-ghost btn-sm">Ver gastos</a>
           </div>
-          <div class="target-item">
-            <div class="target-row">
-              <span>Quarterly target</span>
-              <span>58%</span>
-            </div>
-            <div class="progress-bar-wrapper"><div class="progress-bar" style="width:58%"></div></div>
+          <div id="dashboard-category-bars" class="dashboard-category-bars">
+            <div class="empty-state-sm">Cargando...</div>
           </div>
-          <div class="target-item">
-            <div class="target-row">
-              <span>Team A</span>
-              <span>81%</span>
-            </div>
-            <div class="progress-bar-wrapper"><div class="progress-bar" style="width:81%"></div></div>
-          </div>
-          <p class="text-muted">12 días restantes para cierre mensual</p>
         </article>
+
       </section>
 
       <section class="section">
@@ -265,25 +252,6 @@
   <script>
     (async () => {
       await UIComponents.loadSidebar('sidebar-slot', 'dashboard');
-
-      UIComponents.renderContactRows('crm-contact-list', [
-        { name: 'Sofia Martinez', company: 'Northwind', value: '$12.400', status: 'Activo' },
-        { name: 'Diego Rivas', company: 'Apex Labs', value: '$8.950', status: 'Prospect' },
-        { name: 'Laura Gomez', company: 'Vertex Group', value: '$15.120', status: 'Activo' },
-        { name: 'Martin Acosta', company: 'BlueStone', value: '$6.300', status: 'Prospect' }
-      ]);
-
-      UIComponents.renderActivity('activity-feed', [
-        { title: 'Nuevo contacto asignado a SDR', time: 'Hace 12 min', type: 'Info' },
-        { title: 'Seguimiento enviado a Northwind', time: 'Hace 35 min', type: 'Task' },
-        { title: 'Deal marcado como Won', time: 'Hace 1 h', type: 'Deal' }
-      ]);
-
-      UIComponents.renderPerformers('top-performers', [
-        { name: 'Ana Torres', region: 'LATAM', value: '$42.8k' },
-        { name: 'Jorge Diaz', region: 'EMEA', value: '$39.2k' },
-        { name: 'Lucia Perez', region: 'NA', value: '$34.6k' }
-      ]);
 
       Auth.requireAuth();
       Dashboard.init();

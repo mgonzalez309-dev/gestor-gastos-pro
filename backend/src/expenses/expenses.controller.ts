@@ -22,6 +22,7 @@ import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
 
 @ApiTags('expenses')
 @ApiBearerAuth()
@@ -72,13 +73,15 @@ export class ExpensesController {
   }
 
   @Get('analytics/:userId')
+  @Roles(Role.ADVISOR)
   @ApiOperation({ summary: 'Resumen analítico de gastos de un usuario (ADVISOR)' })
   getAnalytics(@Param('userId') userId: string) {
     return this.expensesService.getAnalytics(userId);
   }
 
   @Get('patterns/:userId')
-  @ApiOperation({ summary: 'Patrones de consumo de un usuario' })
+  @Roles(Role.ADVISOR)
+  @ApiOperation({ summary: 'Patrones de consumo de un usuario (ADVISOR)' })
   getPatterns(@Param('userId') userId: string) {
     return this.expensesService.getPatterns(userId);
   }

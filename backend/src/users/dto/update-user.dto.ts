@@ -1,4 +1,4 @@
-import { IsString, IsOptional, MinLength, IsIn, IsInt, IsNumber, Min, Max } from 'class-validator';
+import { IsString, IsOptional, MinLength, MaxLength, IsEmail, IsIn, IsInt, IsNumber, Min, Max } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 const SUPPORTED_CURRENCIES = ['ARS','USD','EUR','BRL','CLP','MXN','UYU','GBP'] as const;
@@ -7,16 +7,18 @@ export class UpdateUserDto {
   @ApiPropertyOptional({ example: 'Juan Pérez' })
   @IsString()
   @IsOptional()
+  @MaxLength(100)
   name?: string;
 
   @ApiPropertyOptional({ example: 'nueva@email.com' })
-  @IsString()
+  @IsEmail()
   @IsOptional()
   email?: string;
 
   @ApiPropertyOptional({ example: 'NuevaContraseña123', minLength: 6 })
   @IsString()
   @MinLength(6)
+  @MaxLength(128)
   @IsOptional()
   password?: string;
 
