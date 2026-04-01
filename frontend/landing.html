@@ -654,6 +654,18 @@
     }
     .footer-text { font-size: 0.82rem; color: rgba(255,255,255,0.3); }
 
+    /* ── DECRYPTED TEXT ─────────────────────────────────────────── */
+    .dt-encrypted {
+      color: var(--blue-light);
+      opacity: 0.55;
+      font-variant-numeric: tabular-nums;
+    }
+    .dt-revealed {
+      opacity: 1;
+    }
+    /* Keep navbar name colour consistent once revealed */
+    .navbar-logo-name .dt-revealed { color: #fff; }
+
     /* ── DIVIDER ─────────────────────────────────────────────────── */
     .section-divider {
       height: 1px;
@@ -688,7 +700,17 @@
   <nav class="navbar">
     <a href="landing.html" class="navbar-logo">
       <div class="navbar-logo-mark">GA</div>
-      <span class="navbar-logo-name">GastosApp</span>
+      <span class="navbar-logo-name"
+            data-decrypt-parent
+            data-decrypted-text="GastosApp"
+            data-animate-on="view"
+            data-speed="45"
+            data-max-iterations="15"
+            data-sequential="true"
+            data-reveal-direction="start"
+            data-characters="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&"
+            data-encrypted-class="dt-encrypted"
+            data-revealed-class="dt-revealed"></span>
     </a>
     <div class="navbar-actions">
       <a href="index.html" class="btn-ghost">Iniciar sesión</a>
@@ -708,7 +730,52 @@
         </div>
 
         <h1 class="hero-title">
-          Tomá el control<br>de tus <span class="gradient-text">finanzas</span><br>con IA
+          <span
+            data-decrypted-text="Tomá el control"
+            data-animate-on="view"
+            data-speed="40"
+            data-max-iterations="20"
+            data-sequential="true"
+            data-reveal-direction="start"
+            data-use-original-chars-only="false"
+            data-characters="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&"
+            data-encrypted-class="dt-encrypted"
+            data-revealed-class="dt-revealed"
+            data-decrypt-delay="0"></span><br><span
+            data-decrypted-text="de tus "
+            data-animate-on="view"
+            data-speed="40"
+            data-max-iterations="20"
+            data-sequential="true"
+            data-reveal-direction="start"
+            data-use-original-chars-only="false"
+            data-characters="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&"
+            data-encrypted-class="dt-encrypted"
+            data-revealed-class="dt-revealed"
+            data-decrypt-delay="900"></span><span
+            class="gradient-text"
+            data-decrypted-text="finanzas"
+            data-animate-on="view"
+            data-speed="40"
+            data-max-iterations="20"
+            data-sequential="true"
+            data-reveal-direction="start"
+            data-use-original-chars-only="false"
+            data-characters="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&"
+            data-encrypted-class="dt-encrypted"
+            data-revealed-class="dt-revealed"
+            data-decrypt-delay="900"></span><br><span
+            data-decrypted-text="con IA"
+            data-animate-on="view"
+            data-speed="40"
+            data-max-iterations="20"
+            data-sequential="true"
+            data-reveal-direction="start"
+            data-use-original-chars-only="false"
+            data-characters="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&"
+            data-encrypted-class="dt-encrypted"
+            data-revealed-class="dt-revealed"
+            data-decrypt-delay="1800"></span>
         </h1>
 
         <p class="hero-subtitle">
@@ -956,11 +1023,21 @@
     <div class="footer">
       <div class="footer-brand">
         <div style="width:1.5rem;height:1.5rem;border-radius:7px;background:linear-gradient(135deg,#0f6fff,#13a58b);display:grid;place-items:center;font-size:0.6rem;font-weight:800;color:#fff;">GA</div>
-        GastosApp
+        <span
+          data-decrypted-text="GastosApp"
+          data-animate-on="view"
+          data-speed="45"
+          data-max-iterations="15"
+          data-sequential="true"
+          data-reveal-direction="start"
+          data-characters="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&"
+          data-encrypted-class="dt-encrypted"
+          data-revealed-class="dt-revealed"></span>
       </div>
       <span class="footer-text">© 2026 GastosApp · Todos los derechos reservados</span>
     </div>
   </footer>
 
+  <script src="/js/decrypted-text.js"></script>
 </body>
 </html>

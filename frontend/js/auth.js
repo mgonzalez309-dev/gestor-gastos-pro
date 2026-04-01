@@ -326,7 +326,6 @@ const Auth = (() => {
 
   function initLoginPage() {
     initPublicTheme();
-    redirectIfLoggedIn();
 
     const form      = document.getElementById('login-form');
     const btn       = document.getElementById('login-btn');
