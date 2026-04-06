@@ -41,6 +41,12 @@ export class UpdateUserDto {
   @IsOptional()
   monthlyIncome?: number;
 
+  @ApiPropertyOptional({ example: 30000, description: 'Monto mensual a destinar al ahorro' })
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  savingsGoal?: number;
+
   @ApiPropertyOptional({ example: 'data:image/jpeg;base64,...' })
   @IsString()
   @IsOptional()

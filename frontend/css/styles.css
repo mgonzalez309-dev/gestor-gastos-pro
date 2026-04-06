@@ -1712,6 +1712,8 @@ p { color: var(--text-secondary); }
 
 .budget-config-card,
 .budget-summary-card,
+.savings-config-card,
+.savings-summary-card,
 .profile-stats-card {
   padding: 1rem;
 }
@@ -1808,6 +1810,50 @@ p { color: var(--text-secondary); }
 .budget-available--ok { color: var(--color-success); }
 .budget-available--low { color: var(--color-warning); }
 .budget-available--over { color: var(--color-danger); }
+
+/* ── Savings warning banner ─────────────────────────────────── */
+.savings-warning {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+  padding: 0.6rem 0.85rem;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.savings-warning svg,
+.savings-warning i {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+.savings-warning--warning {
+  background: rgba(217, 119, 6, 0.12);
+  border: 1px solid rgba(217, 119, 6, 0.3);
+  color: #92400e;
+}
+
+.savings-warning--danger {
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  color: #991b1b;
+}
+
+body[data-theme='dark'] .savings-warning--warning {
+  background: rgba(251, 191, 36, 0.1);
+  border-color: rgba(251, 191, 36, 0.25);
+  color: #fbbf24;
+}
+
+body[data-theme='dark'] .savings-warning--danger {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.25);
+  color: #f87171;
+}
 
 .budget-divider {
   border: 0;

@@ -36,7 +36,9 @@ const Profile = (() => {
     set('p-email',    user.email);
     set('p-currency', user.currency || 'ARS');
     set('p-income',   user.monthlyIncome ?? '');
+    set('p-savings',  user.savingsGoal  ?? '');
     updateCurrencyBadge(user.currency || 'ARS');
+    updateSavingsPctHint(user.monthlyIncome, user.savingsGoal);
   }
 
   function renderStats(user) {
@@ -214,6 +216,7 @@ const Profile = (() => {
   async function loadBudgetSummary() {
     const user = Api.getUser();
     const income = user?.monthlyIncome;
+    const savingsGoal = user?.savingsGoal;
 
     const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
 
@@ -249,14 +252,78 @@ const Profile = (() => {
 
       const pctEl = document.getElementById('bs-pct');
       if (pctEl) pctEl.textContent = `${pct}% usado`;
+
+      // ── Savings summary ─────────────────────────────────────────
+      renderSavingsSummary(income, savingsGoal, spent);
     } catch {
       set('bs-spent', 'Error');
     }
   }
 
+  function renderSavingsSummary(income, savingsGoal, spent) {
+    const summaryCard = document.getElementById('savings-summary-card');
+    if (!summaryCard) return;
+
+    if (!income || !savingsGoal || savingsGoal <= 0) {
+      summaryCard.classList.add('hidden');
+      return;
+    }
+
+    summaryCard.classList.remove('hidden');
+
+    const freeBudget  = income - savingsGoal;       // cuánto podés gastar sin tocar ahorros
+    const freeLeft    = freeBudget - spent;          // cuánto queda de ese presupuesto libre
+    const savingsLeft = freeLeft < 0 ? Math.abs(freeLeft) : 0; // cuánto ya entró en ahorros
+
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    set('sav-goal',        Api.formatCurrency(savingsGoal));
+    set('sav-free-budget', Api.formatCurrency(freeBudget));
+    set('sav-spent',       Api.formatCurrency(spent));
+
+    const availEl = document.getElementById('sav-available');
+    if (availEl) {
+      availEl.textContent = freeLeft >= 0 ? Api.formatCurrency(freeLeft) : `−${Api.formatCurrency(Math.abs(freeLeft))}`;
+      availEl.style.color = freeLeft < 0 ? 'var(--color-error, #e53e3e)' : freeLeft < freeBudget * 0.15 ? 'var(--color-warning, #d97706)' : '';
+    }
+
+    // Warning logic
+    const warningEl   = document.getElementById('savings-warning');
+    const warningText = document.getElementById('savings-warning-text');
+    if (!warningEl || !warningText) return;
+
+    if (freeLeft < 0) {
+      // Already eating savings
+      warningEl.classList.remove('hidden');
+      warningEl.className = 'savings-warning savings-warning--danger';
+      warningText.textContent = `¡Atención! Ya gastaste ${Api.formatCurrency(Math.abs(freeLeft))} de tus ahorros este mes.`;
+    } else if (freeLeft < freeBudget * 0.15) {
+      // Less than 15% of free budget remaining — close to savings
+      warningEl.classList.remove('hidden');
+      warningEl.className = 'savings-warning savings-warning--warning';
+      warningText.textContent = `Estás cerca del límite. Si seguís gastando vas a empezar a consumir tus ahorros (${Api.formatCurrency(savingsGoal)}).`;
+    } else {
+      warningEl.classList.add('hidden');
+    }
+
+    // Rebuild lucide icons for any new <i data-lucide> elements
+    if (window.lucide) lucide.createIcons();
+  }
   function updateCurrencyBadge(currency) {
     const el = document.getElementById('income-currency-badge');
     if (el) el.textContent = currency;
+    const savEl = document.getElementById('savings-currency-badge');
+    if (savEl) savEl.textContent = currency;
+  }
+
+  function updateSavingsPctHint(income, savingsGoal) {
+    const hint = document.getElementById('savings-pct-hint');
+    if (!hint) return;
+    if (income && savingsGoal && income > 0) {
+      const pct = Math.round((savingsGoal / income) * 100);
+      hint.textContent = `Eso representa el ${pct}% de tu ingreso mensual.`;
+    } else {
+      hint.textContent = '';
+    }
   }
 
   // ── Save profile ──────────────────────────────────────────────────
@@ -338,6 +405,46 @@ const Profile = (() => {
       const updated = await Api.put(`/users/${user.id}`, { monthlyIncome });
       Api.saveUser({ ...Api.getUser(), ...updated, monthlyIncome });
       Api.showAlert('profile-page-alert', 'Ingreso actualizado.', 'success');
+      updateSavingsPctHint(monthlyIncome, Api.getUser()?.savingsGoal);
+      await loadBudgetSummary();
+    } catch (err) {
+      Api.showAlert('profile-page-alert', err.message, 'error');
+    } finally {
+      if (btn) btn.disabled = false;
+      btnText?.classList.remove('hidden');
+      btnSpin?.classList.add('hidden');
+    }
+  }
+
+  // ── Save savings goal ─────────────────────────────────────────────
+  async function saveSavings() {
+    const user = Api.getUser();
+    if (!user) return;
+
+    const btn     = document.getElementById('savings-save-btn');
+    const btnText = btn?.querySelector('.btn-text');
+    const btnSpin = btn?.querySelector('.btn-spinner');
+    const raw     = document.getElementById('p-savings')?.value;
+    const savingsGoal = raw !== '' ? parseFloat(raw) : 0;
+
+    if (isNaN(savingsGoal) || savingsGoal < 0) {
+      Api.showAlert('profile-page-alert', 'La meta de ahorro debe ser un número positivo.', 'error'); return;
+    }
+
+    const income = user.monthlyIncome || 0;
+    if (income > 0 && savingsGoal > income) {
+      Api.showAlert('profile-page-alert', 'La meta de ahorro no puede superar el ingreso mensual.', 'error'); return;
+    }
+
+    if (btn) btn.disabled = true;
+    btnText?.classList.add('hidden');
+    btnSpin?.classList.remove('hidden');
+
+    try {
+      const updated = await Api.put(`/users/${user.id}`, { savingsGoal });
+      Api.saveUser({ ...Api.getUser(), ...updated, savingsGoal });
+      Api.showAlert('profile-page-alert', 'Meta de ahorro guardada.', 'success');
+      updateSavingsPctHint(income, savingsGoal);
       await loadBudgetSummary();
     } catch (err) {
       Api.showAlert('profile-page-alert', err.message, 'error');
@@ -352,10 +459,18 @@ const Profile = (() => {
   function bindEvents() {
     document.getElementById('profile-save-btn')?.addEventListener('click', saveProfile);
     document.getElementById('income-save-btn')?.addEventListener('click', saveIncome);
+    document.getElementById('savings-save-btn')?.addEventListener('click', saveSavings);
 
     // Sync currency badge while selecting currency
     document.getElementById('p-currency')?.addEventListener('change', (e) => {
       updateCurrencyBadge(e.target.value);
+    });
+
+    // Live hint: update savings % as user types
+    document.getElementById('p-savings')?.addEventListener('input', () => {
+      const income = Api.getUser()?.monthlyIncome;
+      const raw = document.getElementById('p-savings')?.value;
+      updateSavingsPctHint(income, parseFloat(raw) || 0);
     });
 
     bindAvatarInput();

@@ -72,6 +72,7 @@ const Dashboard = (() => {
       renderSidebarInsights(data);
       renderPaceCard(data);
       renderCategoryBars(data.byCategory, data.currentMonth?.total);
+      renderSavingsAlert(data);
 
       // Show unusual expenses alert if any
       if (data.unusualExpenses && data.unusualExpenses.length > 0) {
@@ -79,6 +80,43 @@ const Dashboard = (() => {
       }
     } catch (err) {
       console.error('Error cargando analytics:', err);
+    }
+  }
+
+  function renderSavingsAlert(data) {
+    const user = Api.getUser();
+    const income = user?.monthlyIncome;
+    const savingsGoal = data.savingsGoal || user?.savingsGoal;
+    if (!income || !savingsGoal || savingsGoal <= 0) return;
+
+    const spent     = data.currentMonth?.total || 0;
+    const freeBudget = income - savingsGoal;
+    const freeLeft   = freeBudget - spent;
+
+    // Only show if within danger/warning zone
+    let alertEl = document.getElementById('dashboard-savings-alert');
+    if (!alertEl) {
+      // Insert before the charts section
+      const chartsSection = document.querySelector('.charts-grid');
+      if (!chartsSection) return;
+      alertEl = document.createElement('div');
+      alertEl.id = 'dashboard-savings-alert';
+      alertEl.className = 'alert hidden mb-1';
+      chartsSection.parentNode.insertBefore(alertEl, chartsSection);
+    }
+
+    if (freeLeft < 0) {
+      Api.showAlert('dashboard-savings-alert',
+        `⚠️ Atención: ya gastaste ${Api.formatCurrency(Math.abs(freeLeft))} de tu meta de ahorro (${Api.formatCurrency(savingsGoal)}) este mes.`,
+        'error'
+      );
+    } else if (freeLeft < freeBudget * 0.15) {
+      Api.showAlert('dashboard-savings-alert',
+        `⚠️ Cuidado: te quedan ${Api.formatCurrency(freeLeft)} antes de empezar a consumir tu meta de ahorro (${Api.formatCurrency(savingsGoal)}).`,
+        'warning'
+      );
+    } else {
+      alertEl.classList.add('hidden');
     }
   }
 

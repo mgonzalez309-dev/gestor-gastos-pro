@@ -237,6 +237,12 @@ export class ExpensesService {
     const monthGrowth =
       prevTotal > 0 ? ((currentTotal - prevTotal) / prevTotal) * 100 : 0;
 
+    // Fetch user's savings goal to include in the response
+    const userRecord = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { savingsGoal: true },
+    });
+
     return {
       byCategory: byCategory.map((c) => ({
         category: c.category,
@@ -259,6 +265,7 @@ export class ExpensesService {
       monthGrowth: Math.round(monthGrowth * 100) / 100,
       unusualExpenses,
       averageExpense: Math.round(avgAmount * 100) / 100,
+      savingsGoal: userRecord?.savingsGoal ?? null,
     };
   }
 

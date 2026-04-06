@@ -140,6 +140,48 @@
             </div>
           </div>
 
+          <!-- Gestionar Ahorros -->
+          <div class="card savings-config-card">
+            <div class="card-title-row">
+              <span class="card-title-icon"><i data-lucide="piggy-bank"></i></span>
+              <h3 class="card-title">Gestionar ahorros</h3>
+            </div>
+            <p class="card-subtitle">Definí cuánto del ingreso mensual querés reservar para ahorros.</p>
+
+            <div class="form-group mt-1">
+              <label class="form-label" for="p-savings">Meta de ahorro mensual</label>
+              <div class="input-currency-wrapper">
+                <span class="input-currency-badge" id="savings-currency-badge">ARS</span>
+                <input type="number" id="p-savings" class="form-input" min="0" step="100" placeholder="Ej: 50000" />
+              </div>
+              <p class="form-hint" id="savings-pct-hint"></p>
+            </div>
+
+            <button class="btn btn-secondary" id="savings-save-btn">
+              <span class="btn-text">Guardar meta</span>
+              <span class="btn-spinner hidden">Cargando...</span>
+            </button>
+          </div>
+
+          <!-- Resumen de ahorros del mes -->
+          <div class="card savings-summary-card hidden" id="savings-summary-card">
+            <div class="budget-summary-header">
+              <span class="budget-summary-icon"><i data-lucide="trending-up"></i></span>
+              <h3 class="card-title">Ahorros este mes</h3>
+            </div>
+
+            <div class="budget-row"><span class="budget-label">Meta de ahorro</span><span class="budget-value" id="sav-goal">-</span></div>
+            <div class="budget-row"><span class="budget-label">Presupuesto libre</span><span class="budget-value" id="sav-free-budget">-</span></div>
+            <div class="budget-row"><span class="budget-label">Gastado</span><span class="budget-value budget-value--spent" id="sav-spent">-</span></div>
+            <hr class="budget-divider" />
+            <div class="budget-row budget-row--total"><span class="budget-label">Disponible (sin tocar ahorros)</span><span class="budget-value" id="sav-available">-</span></div>
+
+            <div id="savings-warning" class="savings-warning hidden">
+              <i data-lucide="alert-triangle"></i>
+              <span id="savings-warning-text"></span>
+            </div>
+          </div>
+
           <div class="card profile-stats-card" id="profile-stats-card">
             <h3 class="card-title">Mi cuenta</h3>
             <div class="profile-stat-row"><span>Gastos registrados</span><strong id="ps-expense-count">-</strong></div>

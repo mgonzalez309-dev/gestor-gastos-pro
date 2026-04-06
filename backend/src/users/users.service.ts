@@ -43,6 +43,7 @@ export class UsersService {
         currency: true,
         age: true,
         monthlyIncome: true,
+        savingsGoal: true,
         avatarUrl: true,
         createdAt: true,
         _count: {
@@ -76,6 +77,7 @@ export class UsersService {
     if (dto.currency)     data.currency     = dto.currency;
     if (dto.age !== undefined)           data.age           = dto.age;
     if (dto.monthlyIncome !== undefined) data.monthlyIncome = dto.monthlyIncome;
+    if (dto.savingsGoal !== undefined)   data.savingsGoal   = dto.savingsGoal;
 
     // ── Avatar: upload base64 to Cloudinary, store returned HTTPS URL ─────────
     if (dto.avatarUrl !== undefined) {
@@ -109,6 +111,7 @@ export class UsersService {
         currency: true,
         age: true,
         monthlyIncome: true,
+        savingsGoal: true,
         avatarUrl: true,
         updatedAt: true,
       },
