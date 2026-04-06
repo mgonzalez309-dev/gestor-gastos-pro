@@ -1739,6 +1739,12 @@ body[data-theme='light'] .page-header.glass-card {
   border-color: rgba(15, 111, 255, 0.1) !important;
 }
 
+body[data-theme='light'] .sidebar-toggle {
+  color: #0f172a !important;
+  background: rgba(15, 23, 42, 0.06) !important;
+  border-color: rgba(15, 23, 42, 0.12) !important;
+}
+
 body[data-theme='light'] .page-title {
   color: #0f172a !important;
 }

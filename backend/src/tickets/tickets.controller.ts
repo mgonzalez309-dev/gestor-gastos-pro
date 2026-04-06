@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Get,
+  Delete,
   Param,
   UseGuards,
   UseInterceptors,
@@ -102,5 +103,11 @@ export class TicketsController {
   @ApiOperation({ summary: 'Obtener un ticket por ID' })
   findOne(@Param('id') id: string, @Request() req) {
     return this.ticketsService.findOne(id, req.user.id);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Eliminar un ticket y su imagen' })
+  remove(@Param('id') id: string, @Request() req) {
+    return this.ticketsService.remove(id, req.user.id);
   }
 }

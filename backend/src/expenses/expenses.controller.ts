@@ -68,15 +68,17 @@ export class ExpensesController {
 
   @Get('analytics')
   @ApiOperation({ summary: 'Resumen analítico de gastos del usuario autenticado' })
-  getMyAnalytics(@Request() req) {
-    return this.expensesService.getAnalytics(req.user.id);
+  @ApiQuery({ name: 'period', required: false, enum: ['month', 'year', 'all'] })
+  getMyAnalytics(@Request() req, @Query('period') period?: 'month' | 'year' | 'all') {
+    return this.expensesService.getAnalytics(req.user.id, period ?? 'all');
   }
 
   @Get('analytics/:userId')
   @Roles(Role.ADVISOR)
   @ApiOperation({ summary: 'Resumen analítico de gastos de un usuario (ADVISOR)' })
-  getAnalytics(@Param('userId') userId: string) {
-    return this.expensesService.getAnalytics(userId);
+  @ApiQuery({ name: 'period', required: false, enum: ['month', 'year', 'all'] })
+  getAnalytics(@Param('userId') userId: string, @Query('period') period?: 'month' | 'year' | 'all') {
+    return this.expensesService.getAnalytics(userId, period ?? 'all');
   }
 
   @Get('patterns/:userId')

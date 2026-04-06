@@ -83,6 +83,24 @@ export class TicketsService {
     return ticket;
   }
 
+  async remove(id: string, userId: string) {
+    const ticket = await this.prisma.ticket.findUnique({ where: { id } });
+
+    if (!ticket || ticket.userId !== userId) {
+      throw new NotFoundException(`Ticket con id "${id}" no encontrado.`);
+    }
+
+    // Delete physical file if it exists
+    const filePath = path.join(process.cwd(), ticket.imageUrl);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+
+    await this.prisma.ticket.delete({ where: { id } });
+
+    return { message: 'Ticket eliminado correctamente.' };
+  }
+
   // ─── Private ──────────────────────────────────────────────────────────────
 
   private async processOcr(ticketId: string, imagePath: string) {

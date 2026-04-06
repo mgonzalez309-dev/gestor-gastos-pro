@@ -131,10 +131,18 @@ export class ExpensesService {
 
   // ─── Analytics ────────────────────────────────────────────────────────────
 
-  async getAnalytics(userId: string) {
+  async getAnalytics(userId: string, period: 'month' | 'year' | 'all' = 'all') {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOf6MonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+
+    // Date filter used for the byCategory donut chart
+    let categoryDateFilter: { gte?: Date } = {};
+    if (period === 'month') {
+      categoryDateFilter = { gte: startOfMonth };
+    } else if (period === 'year') {
+      categoryDateFilter = { gte: new Date(now.getFullYear(), 0, 1) };
+    }
 
     const [
       byCategory,
@@ -143,10 +151,13 @@ export class ExpensesService {
       currentMonthTotal,
       previousMonthTotal,
     ] = await Promise.all([
-      // Expenses grouped by category (all time)
+      // Expenses grouped by category (filtered by period)
       this.prisma.expense.groupBy({
         by: ['category'],
-        where: { userId },
+        where: {
+          userId,
+          ...(categoryDateFilter.gte ? { date: categoryDateFilter } : {}),
+        },
         _sum: { amount: true },
         _count: true,
         orderBy: { _sum: { amount: 'desc' } },

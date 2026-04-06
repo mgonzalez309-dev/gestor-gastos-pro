@@ -143,12 +143,31 @@
       <section>
         <h4 class="sidebar-section-title">Quick Actions</h4>
         <div class="quick-actions">
-          <button class="btn btn-ghost action-btn">Ver historial OCR</button>
-          <button class="btn btn-ghost action-btn">Crear gasto manual</button>
+          <button class="btn btn-ghost action-btn" id="btn-ver-historial">Ver historial OCR</button>
+          <button class="btn btn-ghost action-btn" id="btn-crear-gasto-manual">Crear gasto manual</button>
         </div>
       </section>
     </div>
   </aside>
+
+  <!-- Delete ticket confirm modal -->
+  <div class="modal hidden" id="ticket-delete-modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box" style="max-width:400px;">
+      <div class="modal-header">
+        <h3>Eliminar ticket</h3>
+        <button class="modal-close" id="ticket-delete-modal-close">X</button>
+      </div>
+      <div class="modal-body">
+        <p>¿Estás seguro de que quieres eliminar este ticket? Esta acción no se puede deshacer.</p>
+        <div id="ticket-delete-alert" class="alert hidden mt-1"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="ticket-delete-cancel-btn">Cancelar</button>
+        <button class="btn btn-primary" id="ticket-delete-confirm-btn" style="background:var(--color-error,#e53e3e);border-color:var(--color-error,#e53e3e);">Eliminar</button>
+      </div>
+    </div>
+  </div>
 
   <script src="js/runtime-config.js"></script>
   <script src="js/api.js"></script>

@@ -12,7 +12,64 @@ const Tickets = (() => {
     bindDropzone();
     bindUploadBtn();
     bindStep3Form();
+    bindSidebarActions();
+    bindDeleteModal();
     loadTicketHistory();
+  }
+
+  function bindSidebarActions() {
+    document.getElementById('btn-ver-historial')?.addEventListener('click', () => {
+      const historySection = document.getElementById('ticket-history');
+      if (historySection) {
+        historySection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+
+    document.getElementById('btn-crear-gasto-manual')?.addEventListener('click', () => {
+      window.location.href = 'expenses.html?new=1';
+    });
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  // DELETE MODAL
+  // ══════════════════════════════════════════════════════════════════
+  let deletingTicketId = null;
+
+  function bindDeleteModal() {
+    document.getElementById('ticket-delete-modal-close')?.addEventListener('click', closeDeleteModal);
+    document.getElementById('ticket-delete-cancel-btn')?.addEventListener('click', closeDeleteModal);
+    document.getElementById('ticket-delete-modal')?.querySelector('.modal-backdrop')?.addEventListener('click', closeDeleteModal);
+    document.getElementById('ticket-delete-confirm-btn')?.addEventListener('click', confirmDeleteTicket);
+  }
+
+  function openDeleteModal(id) {
+    deletingTicketId = id;
+    Api.hideAlert('ticket-delete-alert');
+    document.getElementById('ticket-delete-modal')?.classList.remove('hidden');
+  }
+
+  function closeDeleteModal() {
+    deletingTicketId = null;
+    document.getElementById('ticket-delete-modal')?.classList.add('hidden');
+  }
+
+  async function confirmDeleteTicket() {
+    if (!deletingTicketId) return;
+
+    const confirmBtn = document.getElementById('ticket-delete-confirm-btn');
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'Eliminando...';
+
+    try {
+      await Api.del(`/tickets/${deletingTicketId}`);
+      closeDeleteModal();
+      loadTicketHistory();
+    } catch (err) {
+      Api.showAlert('ticket-delete-alert', err.message, 'error');
+    } finally {
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = 'Eliminar';
+    }
   }
 
   // ══════════════════════════════════════════════════════════════════
@@ -276,15 +333,26 @@ const Tickets = (() => {
 
       container.innerHTML = tickets.slice(0, 8).map((t) => `
         <div class="ticket-card" title="Subido el ${Api.formatDate(t.createdAt)}">
-          <img src="${Api.BASE_URL.replace('/api','')}${t.imageUrl}" alt="Ticket"
-               onerror="this.src='data:image/svg+xml,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'100\\' height=\\'120\\'><rect width=\\'100\\' height=\\'120\\' fill=\\'%23e2e8f0\\' rx=\\'8\\'/><text x=\\'50\\' y=\\'68\\' text-anchor=\\'middle\\' fill=\\'%2394a3b8\\' font-size=\\'11\\' font-family=\\'sans-serif\\'>Sin imagen</text></svg>'
-          " />
+          <div class="ticket-card-img-wrap">
+            <img src="${Api.BASE_URL.replace('/api','')}${t.imageUrl}" alt="Ticket"
+                 onerror="this.src='data:image/svg+xml,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'100\\' height=\\'120\\'><rect width=\\'100\\' height=\\'120\\' fill=\\'%23e2e8f0\\' rx=\\'8\\'/><text x=\\'50\\' y=\\'68\\' text-anchor=\\'middle\\' fill=\\'%2394a3b8\\' font-size=\\'11\\' font-family=\\'sans-serif\\'>Sin imagen</text></svg>'"
+            />
+            <button class="ticket-card-delete-btn" data-id="${esc(t.id)}" title="Eliminar ticket" aria-label="Eliminar ticket">&times;</button>
+          </div>
           <div class="ticket-card-body">
             <div class="ticket-card-date">${Api.formatRelativeDate(t.createdAt)}</div>
             <div class="ticket-card-amount">${t.parsedAmount ? Api.formatCurrency(t.parsedAmount) : 'Sin datos'}</div>
             ${t.parsedMerchant ? `<div style="font-size:.78rem;color:var(--text-muted)">${esc(t.parsedMerchant)}</div>` : ''}
           </div>
         </div>`).join('');
+
+      // Bind delete buttons after rendering
+      container.querySelectorAll('.ticket-card-delete-btn').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openDeleteModal(btn.dataset.id);
+        });
+      });
     } catch (err) {
       container.innerHTML = '<div class="empty-state-sm">Error cargando historial.</div>';
     }

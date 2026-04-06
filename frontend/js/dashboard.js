@@ -6,6 +6,7 @@ const Dashboard = (() => {
 
   let charts = {};
   let cachedAnalytics = null;
+  let categoryPeriod = 'all';
 
   async function init() {
     // Update greeting
@@ -14,6 +15,8 @@ const Dashboard = (() => {
     const greeting = hour < 12 ? 'Buenos días' : hour < 18 ? 'Buenas tardes' : 'Buenas noches';
     const greetEl = document.getElementById('greeting');
     if (greetEl) greetEl.textContent = `${greeting}, ${user?.name?.split(' ')[0] || ''}!`;
+
+    bindCategoryPeriodFilter();
 
     await Promise.all([
       loadAnalytics(),
@@ -32,6 +35,29 @@ const Dashboard = (() => {
       renderPaceCard(cachedAnalytics);
       renderCategoryBars(cachedAnalytics.byCategory, cachedAnalytics.currentMonth?.total);
     });
+  }
+
+  function bindCategoryPeriodFilter() {
+    const container = document.getElementById('category-period-filter');
+    if (!container) return;
+    container.addEventListener('click', async (e) => {
+      const btn = e.target.closest('.chart-period-btn');
+      if (!btn) return;
+      const period = btn.dataset.period;
+      if (period === categoryPeriod) return;
+      categoryPeriod = period;
+      container.querySelectorAll('.chart-period-btn').forEach((b) => b.classList.toggle('active', b === btn));
+      await loadCategoryChart(period);
+    });
+  }
+
+  async function loadCategoryChart(period) {
+    try {
+      const data = await Api.get(`/expenses/analytics?period=${period}`);
+      renderCategoryChart(data.byCategory);
+    } catch (err) {
+      console.error('Error cargando gráfico de categorías:', err);
+    }
   }
 
   // ── Analytics & Charts ────────────────────────────────────────────

@@ -84,12 +84,17 @@ export class ReceiptAiService {
             'You are a receipt extraction agent. Return only valid JSON with this exact schema: ' +
             '{"merchant": string|null, "date": "YYYY-MM-DD"|null, "total": number|null, "tax": number|null, ' +
             '"items": [{"name": string, "price": number|null}]}. ' +
+            'IMPORTANT for "total": use ONLY the final amount the customer actually pays — ' +
+            'the grand total after all taxes and discounts (often labelled TOTAL, TOTAL A PAGAR, IMPORTE TOTAL, GRAN TOTAL, A PAGAR). ' +
+            'NEVER use subtotal, total sin IVA, total neto, total bruto, or any pre-tax/pre-discount figure. ' +
             'No markdown, no explanations, no extra keys.',
         },
         {
           role: 'user',
           content:
-            'Extract structured receipt data from this OCR text. If a field is not found, use null.\n\n' +
+            'Extract structured receipt data from this OCR text. ' +
+            'For "total" pick the FINAL payable amount (after taxes/discounts), NOT the subtotal. ' +
+            'If a field is not found, use null.\n\n' +
             rawText,
         },
       ],
@@ -263,41 +268,68 @@ export class ReceiptAiService {
   }
 
   /**
-   * 3-level strategy to extract the total amount from ticket lines.
-   * Level 1: high-confidence labels (TOTAL A PAGAR, IMPORTE TOTAL, etc.)
-   * Level 2: any line containing "total" (excluding subtotal / IVA)
-   * Level 3: fallback — largest number in the entire ticket
+   * 4-level strategy to extract the FINAL payable total from ticket lines.
+   * Level 1: high-confidence "grand total" labels (reverse order so last match wins)
+   * Level 2: any line with "total" excluding all pre-tax/subtotal variants (reverse order)
+   * Level 3: last amount that appears after the last subtotal line in the document
+   * Level 4: fallback — largest number in the entire ticket
    */
   private extractTotalFromLines(lines: string[]): number | null {
-    const highConfidence = [
+    // Labels that unambiguously mean the final payable amount
+    const grandTotalLabels = [
       'total a pagar', 'importe total', 'total importe', 'monto total',
-      'total a cobrar', 'total factura', 'a pagar:', 'monto:', 'importe:',
-      'total $', 'total pesos', 'total ars',
+      'total a cobrar', 'total factura', 'total final', 'gran total',
+      'total general', 'monto a pagar', 'total pesos', 'total ars',
     ];
 
-    // Level 1
-    for (const line of lines) {
-      const lower = line.toLowerCase();
-      if (highConfidence.some((label) => lower.includes(label))) {
-        const amount = this.extractLastAmountFromLine(line);
+    // Patterns that indicate a NON-final total (must be excluded)
+    const excludedTotalPatterns = [
+      'subtotal', 'sub total', 'sub-total',
+      'total sin iva', 'total neto', 'total bruto', 'total gravado',
+      'total no gravado', 'total exento', 'total descuento',
+      'total bonif', 'total ahorro', 'total items', 'total articulos',
+    ];
+
+    const isExcluded = (lower: string) =>
+      excludedTotalPatterns.some((p) => lower.includes(p));
+
+    // Level 1 — scan in reverse so the LAST grand-total line wins
+    for (let i = lines.length - 1; i >= 0; i--) {
+      const lower = lines[i].toLowerCase();
+      if (grandTotalLabels.some((label) => lower.includes(label)) && !isExcluded(lower)) {
+        const amount = this.extractLastAmountFromLine(lines[i]);
         if (amount !== null) return amount;
       }
     }
 
-    // Level 2
-    for (const line of lines) {
-      const lower = line.toLowerCase();
+    // Level 2 — any line with "total" that isn't a subtotal/pre-tax variant
+    // Scan in reverse so the LAST matching line wins (total is at the bottom)
+    for (let i = lines.length - 1; i >= 0; i--) {
+      const lower = lines[i].toLowerCase();
       if (
         lower.includes('total') &&
-        !lower.includes('subtotal') &&
-        !/\biva\b/.test(lower)
+        !isExcluded(lower) &&
+        !/\biva\b/.test(lower) &&
+        !/\bimpuesto\b/.test(lower)
       ) {
-        const amount = this.extractLastAmountFromLine(line);
+        const amount = this.extractLastAmountFromLine(lines[i]);
         if (amount !== null) return amount;
       }
     }
 
-    // Level 3 — biggest number in the ticket
+    // Level 3 — take the last numeric amount that appears after the last subtotal line
+    const lastSubtotalIdx = lines.reduce(
+      (idx, line, i) => (/subtotal|sub total|sub-total/i.test(line) ? i : idx),
+      -1,
+    );
+    if (lastSubtotalIdx >= 0) {
+      for (let i = lines.length - 1; i > lastSubtotalIdx; i--) {
+        const amount = this.extractLastAmountFromLine(lines[i]);
+        if (amount !== null) return amount;
+      }
+    }
+
+    // Level 4 — biggest number in the ticket
     let maxAmount: number | null = null;
     for (const line of lines) {
       const amount = this.extractLastAmountFromLine(line);

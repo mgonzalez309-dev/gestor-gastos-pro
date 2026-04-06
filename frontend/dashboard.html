@@ -65,6 +65,11 @@
         <div class="chart-card">
           <div class="chart-header">
             <h3 class="chart-title">Gastos por categoría</h3>
+            <div class="chart-period-filter" id="category-period-filter">
+              <button class="btn btn-ghost btn-sm chart-period-btn" data-period="month">Mes</button>
+              <button class="btn btn-ghost btn-sm chart-period-btn" data-period="year">Año</button>
+              <button class="btn btn-ghost btn-sm chart-period-btn active" data-period="all">Siempre</button>
+            </div>
           </div>
           <div class="chart-body">
             <canvas id="chart-category"></canvas>
