@@ -337,12 +337,12 @@ const Tickets = (() => {
             <img src="${Api.BASE_URL.replace('/api','')}${t.imageUrl}" alt="Ticket"
                  onerror="this.src='data:image/svg+xml,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'100\\' height=\\'120\\'><rect width=\\'100\\' height=\\'120\\' fill=\\'%23e2e8f0\\' rx=\\'8\\'/><text x=\\'50\\' y=\\'68\\' text-anchor=\\'middle\\' fill=\\'%2394a3b8\\' font-size=\\'11\\' font-family=\\'sans-serif\\'>Sin imagen</text></svg>'"
             />
-            <button class="ticket-card-delete-btn" data-id="${esc(t.id)}" title="Eliminar ticket" aria-label="Eliminar ticket">&times;</button>
+            <button class="ticket-card-delete-btn" data-id="${Api.escapeHtml(t.id)}" title="Eliminar ticket" aria-label="Eliminar ticket">&times;</button>
           </div>
           <div class="ticket-card-body">
             <div class="ticket-card-date">${Api.formatRelativeDate(t.createdAt)}</div>
             <div class="ticket-card-amount">${t.parsedAmount ? Api.formatCurrency(t.parsedAmount) : 'Sin datos'}</div>
-            ${t.parsedMerchant ? `<div style="font-size:.78rem;color:var(--text-muted)">${esc(t.parsedMerchant)}</div>` : ''}
+            ${t.parsedMerchant ? `<div style="font-size:.78rem;color:var(--text-muted)">${Api.escapeHtml(t.parsedMerchant)}</div>` : ''}
           </div>
         </div>`).join('');
 
@@ -393,10 +393,7 @@ const Tickets = (() => {
 
   // ── Utilities ─────────────────────────────────────────────────────
   function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
-  function esc(str = '') {
-    return String(str)
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  }
+
 
   return { init };
 })();

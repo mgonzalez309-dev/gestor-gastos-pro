@@ -138,16 +138,25 @@ const Api = (() => {
     GBP: 'en-GB',
   };
 
+  // Cache formatters per currency to avoid recreating Intl.NumberFormat on every call.
+  const _currencyFormatters = new Map();
+
   function formatCurrency(amount) {
     if (amount === null || amount === undefined) return '-';
     const user = getUser();
     const currency = user?.currency || 'ARS';
     const locale = CURRENCY_LOCALE[currency] || 'es-AR';
-    return new Intl.NumberFormat(locale, {
-      style: 'currency',
-      currency,
-      minimumFractionDigits: 2,
-    }).format(amount);
+    const key = `${currency}-${locale}`;
+    let formatter = _currencyFormatters.get(key);
+    if (!formatter) {
+      formatter = new Intl.NumberFormat(locale, {
+        style: 'currency',
+        currency,
+        minimumFractionDigits: 2,
+      });
+      _currencyFormatters.set(key, formatter);
+    }
+    return formatter.format(amount);
   }
 
   // ── Utility: date format ──────────────────────────────────────────
@@ -207,6 +216,16 @@ const Api = (() => {
       .toUpperCase();
   }
 
+  // ── Utility: HTML escaping ────────────────────────────────────────
+  function escapeHtml(str = '') {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   // ── Show alert ────────────────────────────────────────────────────
   function showAlert(elementId, message, type = 'error') {
     const el = document.getElementById(elementId);
@@ -231,6 +250,7 @@ const Api = (() => {
     saveUser, getUser,
     formatCurrency, formatDate, formatRelativeDate,
     categoryLabel, categoryPill, todayISO, getInitials,
+    escapeHtml,
     showAlert, hideAlert,
     BASE_URL: API_BASE_URL,
   };

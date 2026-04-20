@@ -127,6 +127,52 @@
         </div>
       </section>
 
+      <!-- Ahorro del Mes (solo visible cuando hay meta de ahorro configurada) -->
+      <section class="section hidden" id="savings-section">
+        <div class="savings-progress-card" id="savings-progress-card">
+          <div class="savings-card-main">
+            <div class="pace-ring-wrapper">
+              <svg class="pace-ring" viewBox="0 0 80 80" aria-hidden="true">
+                <circle class="pace-ring-bg" cx="40" cy="40" r="34" />
+                <circle class="pace-ring-fill" id="sav-ring-fill" cx="40" cy="40" r="34" />
+              </svg>
+              <span class="pace-ring-value" id="sav-ring-pct">0%</span>
+            </div>
+            <div class="savings-card-info">
+              <div class="savings-card-header">
+                <h3 class="pace-card-title">Ahorro del Mes</h3>
+                <span class="savings-card-badge" id="sav-badge"></span>
+              </div>
+              <p class="pace-card-desc" id="sav-desc">Cargando...</p>
+              <div class="savings-stats-grid">
+                <div class="sav-stat">
+                  <span class="sav-stat-label">Meta de ahorro</span>
+                  <span class="sav-stat-value" id="sav-goal-val">-</span>
+                </div>
+                <div class="sav-stat">
+                  <span class="sav-stat-label">Presupuesto libre</span>
+                  <span class="sav-stat-value" id="sav-free-val">-</span>
+                </div>
+                <div class="sav-stat">
+                  <span class="sav-stat-label">Gasto del mes</span>
+                  <span class="sav-stat-value" id="sav-spent-val">-</span>
+                </div>
+                <div class="sav-stat">
+                  <span class="sav-stat-label">Libre disponible</span>
+                  <span class="sav-stat-value" id="sav-avail-val">-</span>
+                </div>
+              </div>
+              <div class="sav-bar-row">
+                <div class="sav-bar-track">
+                  <div class="sav-bar-fill" id="sav-bar-fill" style="width:0%"></div>
+                </div>
+                <span class="sav-bar-label-end" id="sav-bar-label"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section class="crm-content-grid">
 
         <!-- Últimos tickets escaneados -->

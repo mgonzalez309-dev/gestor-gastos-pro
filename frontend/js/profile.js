@@ -202,11 +202,6 @@ const Profile = (() => {
       });
   }
 
-  function compressAndSaveAvatar(file) {
-    // Legacy fallback — no longer called directly; kept for safety
-    bindAvatarInput();
-  }
-
   function updateSidebarAvatar(dataUrl) {
     const el = document.getElementById('user-avatar-initials');
     if (el) el.innerHTML = `<img src="${dataUrl}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />`;

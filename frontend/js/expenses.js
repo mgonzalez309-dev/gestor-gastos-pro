@@ -69,10 +69,10 @@ const Expenses = (() => {
 
       tbody.innerHTML = expenses.map((e) => `
         <tr>
-          <td><strong>${esc(e.merchant)}</strong></td>
+          <td><strong>${Api.escapeHtml(e.merchant)}</strong></td>
           <td>${Api.categoryPill(e.category)}</td>
           <td class="text-muted" style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
-            ${esc(e.description || '-')}
+            ${Api.escapeHtml(e.description || '-')}
           </td>
           <td>${Api.formatDate(e.date)}</td>
           <td class="text-right"><strong>${Api.formatCurrency(e.amount)}</strong></td>
@@ -99,7 +99,7 @@ const Expenses = (() => {
 
       renderPagination(meta);
     } catch (err) {
-      tbody.innerHTML = `<tr><td colspan="6" class="table-empty">Error: ${esc(err.message)}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6" class="table-empty">Error: ${Api.escapeHtml(err.message)}</td></tr>`;
     }
   }
 
@@ -768,13 +768,6 @@ const Expenses = (() => {
       logoDataUrl: cachedLogoDataUrl,
     });
 
-    const filterLines = [
-      `Categoria: ${exportJson.filtros.Categoria}`,
-      `Periodo: ${exportJson.filtros.Periodo}`,
-      `Desde: ${exportJson.filtros.Desde}`,
-      `Hasta: ${exportJson.filtros.Hasta}`,
-    ];
-
     drawSectionTitle(doc, 'Filtros aplicados', 14, 32);
     drawFilterPanel(doc, {
       Categoria: exportJson.filtros.Categoria,
@@ -1120,24 +1113,7 @@ const Expenses = (() => {
   }
 
   function formatMoney(value) {
-    const user = Api.getUser();
-    const currency = user?.currency || 'ARS';
-    const localeMap = {
-      ARS: 'es-AR',
-      USD: 'en-US',
-      EUR: 'es-ES',
-      BRL: 'pt-BR',
-      CLP: 'es-CL',
-      MXN: 'es-MX',
-      UYU: 'es-UY',
-      GBP: 'en-GB',
-    };
-    const locale = localeMap[currency] || 'es-AR';
-    return new Intl.NumberFormat(locale, {
-      style: 'currency',
-      currency,
-      minimumFractionDigits: 2,
-    }).format(Number(value || 0));
+    return Api.formatCurrency(Number(value || 0));
   }
 
   async function ensurePdfBranding(doc) {
@@ -1330,15 +1306,6 @@ const Expenses = (() => {
       btn.disabled = false;
       btn.textContent = 'Eliminar';
     }
-  }
-
-  // ── Utilities ─────────────────────────────────────────────────────
-  function esc(str = '') {
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
   }
 
   return { init, goPage, openEdit, confirmDelete };

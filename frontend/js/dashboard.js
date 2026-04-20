@@ -8,6 +8,19 @@ const Dashboard = (() => {
   let cachedAnalytics = null;
   let categoryPeriod = 'all';
 
+  const CATEGORY_META = {
+    FOOD:          { icon: 'shopping-cart', label: 'Alimentaci\u00f3n' },
+    TRANSPORT:     { icon: 'car',           label: 'Transporte' },
+    ENTERTAINMENT: { icon: 'film',          label: 'Entretenimiento' },
+    HEALTH:        { icon: 'heart',         label: 'Salud' },
+    EDUCATION:     { icon: 'book-open',     label: 'Educaci\u00f3n' },
+    CLOTHING:      { icon: 'tag',           label: 'Ropa' },
+    TECHNOLOGY:    { icon: 'monitor',       label: 'Tecnolog\u00eda' },
+    HOME:          { icon: 'home',          label: 'Hogar' },
+    SERVICES:      { icon: 'wrench',        label: 'Servicios' },
+    OTHER:         { icon: 'package',       label: 'Otros' },
+  };
+
   async function init() {
     // Update greeting
     const user = Api.getUser();
@@ -20,9 +33,8 @@ const Dashboard = (() => {
 
     await Promise.all([
       loadAnalytics(),
-      loadRecentExpenses(),
+      loadRecentExpensesAndMovements(),
       loadRecommendations(),
-      loadSidebarMovements(),
       loadRecentTickets(),
     ]);
 
@@ -72,6 +84,7 @@ const Dashboard = (() => {
       renderSidebarInsights(data);
       renderPaceCard(data);
       renderCategoryBars(data.byCategory, data.currentMonth?.total);
+      renderSavingsCard(data);
       renderSavingsAlert(data);
 
       // Show unusual expenses alert if any
@@ -81,6 +94,82 @@ const Dashboard = (() => {
     } catch (err) {
       console.error('Error cargando analytics:', err);
     }
+  }
+
+  function renderSavingsCard(data) {
+    const user = Api.getUser();
+    const income = user?.monthlyIncome;
+    const savingsGoal = data.savingsGoal != null ? data.savingsGoal : user?.savingsGoal;
+
+    const section = document.getElementById('savings-section');
+    if (!section) return;
+
+    if (!income || !savingsGoal || savingsGoal <= 0) {
+      section.classList.add('hidden');
+      return;
+    }
+    section.classList.remove('hidden');
+
+    const spent      = data.currentMonth?.total || 0;
+    const freeBudget = income - savingsGoal;
+    const freeLeft   = freeBudget - spent;
+    const freePct    = freeBudget > 0 ? Math.round(Math.max(0, Math.min(100, (freeLeft / freeBudget) * 100))) : 0;
+
+    // Ring
+    const CIRCUMFERENCE = 2 * Math.PI * 34;
+    const ringFill = document.getElementById('sav-ring-fill');
+    const ringPct  = document.getElementById('sav-ring-pct');
+    if (ringFill) {
+      ringFill.style.strokeDasharray  = CIRCUMFERENCE;
+      ringFill.style.strokeDashoffset = CIRCUMFERENCE * (1 - freePct / 100);
+    }
+    if (ringPct) ringPct.textContent = `${freePct}%`;
+
+    // State
+    const card = document.getElementById('savings-progress-card');
+    let state, desc, badgeText;
+
+    if (freeLeft < 0) {
+      state     = 'sav-danger';
+      desc      = `Atención: consumiste ${Api.formatCurrency(Math.abs(freeLeft))} de tu meta de ahorro este mes.`;
+      badgeText = 'En riesgo';
+    } else if (freePct < 25) {
+      state     = 'sav-warning';
+      desc      = `Cuidado: solo te quedan ${Api.formatCurrency(freeLeft)} disponibles antes de afectar tu ahorro.`;
+      badgeText = 'Precaución';
+    } else {
+      state     = 'sav-safe';
+      desc      = `Vas bien — tenés ${Api.formatCurrency(freeLeft)} libres sin tocar tu meta de ahorro.`;
+      badgeText = 'En orden';
+    }
+
+    if (card) card.className = `savings-progress-card ${state}`;
+
+    // Values
+    const set = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+    set('sav-goal-val',  Api.formatCurrency(savingsGoal));
+    set('sav-free-val',  Api.formatCurrency(Math.max(0, freeBudget)));
+    set('sav-spent-val', Api.formatCurrency(spent));
+    set('sav-badge',     badgeText);
+
+    const availEl = document.getElementById('sav-avail-val');
+    if (availEl) {
+      availEl.textContent = freeLeft < 0
+        ? `−${Api.formatCurrency(Math.abs(freeLeft))}`
+        : Api.formatCurrency(freeLeft);
+      availEl.style.color = freeLeft < 0
+        ? 'var(--color-danger)'
+        : freeLeft < freeBudget * 0.25
+          ? 'var(--color-warning)'
+          : 'var(--color-success)';
+    }
+
+    // Progress bar (shows % of free budget consumed)
+    const spentPct = freeBudget > 0 ? Math.min(100, Math.round((spent / freeBudget) * 100)) : 0;
+    const barFill  = document.getElementById('sav-bar-fill');
+    const barLabel = document.getElementById('sav-bar-label');
+    if (barFill)  barFill.style.width     = `${spentPct}%`;
+    if (barLabel) barLabel.textContent    = `${spentPct}% del presupuesto libre usado`;
   }
 
   function renderSavingsAlert(data) {
@@ -287,7 +376,7 @@ const Dashboard = (() => {
         <div class="merchant-item">
           <div class="merchant-rank">${i + 1}</div>
           <div class="merchant-bar-wrapper">
-            <div class="merchant-name">${escapeHtml(m.merchant)}</div>
+            <div class="merchant-name">${Api.escapeHtml(m.merchant)}</div>
             <div class="merchant-bar" style="width:${barWidth}%"></div>
           </div>
           <div class="merchant-amount">${Api.formatCurrency(m.total)}</div>
@@ -295,29 +384,62 @@ const Dashboard = (() => {
     }).join('');
   }
 
-  // ── Recent expenses ────────────────────────────────────────────────
-  async function loadRecentExpenses() {
-    const tbody = document.getElementById('recent-expenses-body');
-    if (!tbody) return;
+  // ── Recent expenses + sidebar movements (single API call) ──────────
+  async function loadRecentExpensesAndMovements() {
+    const tbody     = document.getElementById('recent-expenses-body');
+    const movements = document.getElementById('recent-movements');
+
+    function timeAgo(dateStr) {
+      const diff = Date.now() - new Date(dateStr).getTime();
+      const m = Math.floor(diff / 60000);
+      if (m < 1)  return 'Ahora';
+      if (m < 60) return `Hace ${m} min`;
+      const h = Math.floor(m / 60);
+      if (h < 24) return `Hace ${h} h`;
+      const d = Math.floor(h / 24);
+      return `Hace ${d} día${d > 1 ? 's' : ''}`;
+    }
 
     try {
       const res = await Api.get('/expenses?limit=8');
       const expenses = res.data || [];
 
-      if (!expenses.length) {
-        tbody.innerHTML = '<tr><td colspan="4" class="table-empty">Sin gastos registrados aún. ¡Agregá tu primer gasto!</td></tr>';
-        return;
+      // Recent expenses table
+      if (tbody) {
+        if (!expenses.length) {
+          tbody.innerHTML = '<tr><td colspan="4" class="table-empty">Sin gastos registrados aún. ¡Agregá tu primer gasto!</td></tr>';
+        } else {
+          tbody.innerHTML = expenses.map((e) => `
+            <tr>
+              <td><strong>${Api.escapeHtml(e.merchant)}</strong></td>
+              <td>${Api.categoryPill(e.category)}</td>
+              <td>${Api.formatDate(e.date)}</td>
+              <td class="text-right amount">${Api.formatCurrency(e.amount)}</td>
+            </tr>`).join('');
+        }
       }
 
-      tbody.innerHTML = expenses.map((e) => `
-        <tr>
-          <td><strong>${escapeHtml(e.merchant)}</strong></td>
-          <td>${Api.categoryPill(e.category)}</td>
-          <td>${Api.formatDate(e.date)}</td>
-          <td class="text-right amount">${Api.formatCurrency(e.amount)}</td>
-        </tr>`).join('');
-    } catch (err) {
-      tbody.innerHTML = `<tr><td colspan="4" class="table-empty">Error cargando gastos.</td></tr>`;
+      // Sidebar movements (first 4)
+      if (movements) {
+        const recent = expenses.slice(0, 4);
+        if (!recent.length) {
+          movements.innerHTML = '<div class="movement-item"><span class="movement-name" style="color:var(--text-muted)">Sin movimientos aún.</span></div>';
+        } else {
+          movements.innerHTML = recent.map((e) => `
+            <div class="movement-item">
+              <span class="movement-icon"><i data-lucide="${CATEGORY_META[e.category]?.icon || 'package'}"></i></span>
+              <div class="movement-info">
+                <span class="movement-name">${Api.escapeHtml(e.merchant)}</span>
+                <span class="movement-time">${timeAgo(e.date || e.createdAt)}</span>
+              </div>
+              <span class="movement-amount movement-amount--expense">${Api.formatCurrency(e.amount)}</span>
+            </div>`).join('');
+          if (window.lucide) lucide.createIcons({ node: movements });
+        }
+      }
+    } catch {
+      if (tbody) tbody.innerHTML = `<tr><td colspan="4" class="table-empty">Error cargando gastos.</td></tr>`;
+      if (movements) movements.innerHTML = '<div class="movement-item"><span class="movement-name" style="color:var(--text-muted)">Error al cargar.</span></div>';
     }
   }
 
@@ -336,7 +458,7 @@ const Dashboard = (() => {
 
       container.innerHTML = recs.slice(0, 5).map((r) => `
         <div class="rec-item rec-${r.type}">
-          ${escapeHtml(r.message)}
+          ${Api.escapeHtml(r.message)}
           <div class="rec-meta">
             <span>${r.advisor ? `Asesor: ${r.advisor.name}` : 'Sistema automático'}</span>
             <span>${Api.formatRelativeDate(r.createdAt)}</span>
@@ -344,52 +466,6 @@ const Dashboard = (() => {
         </div>`).join('');
     } catch (err) {
       container.innerHTML = '<div class="empty-state-sm">Error cargando recomendaciones.</div>';
-    }
-  }
-
-  // ── Sidebar: Últimos Movimientos ──────────────────────────────────
-  async function loadSidebarMovements() {
-    const container = document.getElementById('recent-movements');
-    if (!container) return;
-
-    const CATEGORY_ICONS = {
-      FOOD: 'shopping-cart', TRANSPORT: 'car', ENTERTAINMENT: 'film',
-      HEALTH: 'heart', EDUCATION: 'book-open', CLOTHING: 'tag',
-      TECHNOLOGY: 'monitor', HOME: 'home', SERVICES: 'wrench', OTHER: 'package',
-    };
-
-    function timeAgo(dateStr) {
-      const diff = Date.now() - new Date(dateStr).getTime();
-      const m = Math.floor(diff / 60000);
-      if (m < 1)  return 'Ahora';
-      if (m < 60) return `Hace ${m} min`;
-      const h = Math.floor(m / 60);
-      if (h < 24) return `Hace ${h} h`;
-      const d = Math.floor(h / 24);
-      return `Hace ${d} día${d > 1 ? 's' : ''}`;
-    }
-
-    try {
-      const res = await Api.get('/expenses?limit=4');
-      const expenses = res.data || [];
-
-      if (!expenses.length) {
-        container.innerHTML = '<div class="movement-item"><span class="movement-name" style="color:var(--text-muted)">Sin movimientos aún.</span></div>';
-        return;
-      }
-
-      container.innerHTML = expenses.map((e) => `
-        <div class="movement-item">
-          <span class="movement-icon"><i data-lucide="${CATEGORY_ICONS[e.category] || 'package'}"></i></span>
-          <div class="movement-info">
-            <span class="movement-name">${escapeHtml(e.merchant)}</span>
-            <span class="movement-time">${timeAgo(e.date || e.createdAt)}</span>
-          </div>
-          <span class="movement-amount movement-amount--expense">${Api.formatCurrency(e.amount)}</span>
-        </div>`).join('');
-      if (window.lucide) lucide.createIcons();
-    } catch (err) {
-      container.innerHTML = '<div class="movement-item"><span class="movement-name" style="color:var(--text-muted)">Error al cargar.</span></div>';
     }
   }
 
@@ -407,7 +483,7 @@ const Dashboard = (() => {
       insights.push({
         type: 'info',
         icon: 'lightbulb',
-        text: `Tu comercio top es <strong>${escapeHtml(top.merchant)}</strong>, concentra el ${pct}% de tus gastos este mes.`,
+        text: `Tu comercio top es <strong>${Api.escapeHtml(top.merchant)}</strong>, concentra el ${pct}% de tus gastos este mes.`,
       });
     }
 
@@ -447,7 +523,7 @@ const Dashboard = (() => {
         <span class="insight-icon"><i data-lucide="${ins.icon}"></i></span>
         <p class="insight-text">${ins.text}</p>
       </div>`).join('');
-    if (window.lucide) lucide.createIcons();
+    if (window.lucide) lucide.createIcons({ node: container });
   }
 
   // ── Unusual alert modal ────────────────────────────────────────────
@@ -459,7 +535,7 @@ const Dashboard = (() => {
     body.innerHTML = `
       <p>Detectamos los siguientes gastos inusualmente altos en los últimos 30 días:</p>
       <ul style="margin:1rem 0;padding-left:1.25rem;">
-        ${expenses.map((e) => `<li><strong>${escapeHtml(e.merchant)}</strong> — ${Api.formatCurrency(e.amount)} (${Api.formatDate(e.date)})</li>`).join('')}
+        ${expenses.map((e) => `<li><strong>${Api.escapeHtml(e.merchant)}</strong> — ${Api.formatCurrency(e.amount)} (${Api.formatDate(e.date)})</li>`).join('')}
       </ul>
       <p>Revisalos para asegurarte de que todo esté en orden.</p>`;
 
@@ -540,8 +616,10 @@ const Dashboard = (() => {
     if (card) card.className = `pace-card pace-${status}`;
 
     const descEl = document.getElementById('pace-desc');
-    if (descEl) descEl.innerHTML = `<i data-lucide="${icon}" style="width:1em;height:1em;vertical-align:-.15em;margin-right:.3em"></i>${desc}`;
-    if (window.lucide) lucide.createIcons();
+    if (descEl) {
+      descEl.innerHTML = `<i data-lucide="${icon}" style="width:1em;height:1em;vertical-align:-.15em;margin-right:.3em"></i>${desc}`;
+      if (window.lucide) lucide.createIcons({ node: descEl });
+    }
 
     // SVG ring (r=34, circumference ≈ 213.6)
     const circumference = 2 * Math.PI * 34;
@@ -574,7 +652,7 @@ const Dashboard = (() => {
       if (insights) {
         const html = `<div class="insight-card insight-card--warn"><span class="insight-icon"><i data-lucide="zap"></i></span><p class="insight-text">A este ritmo gastarías <strong>${Api.formatCurrency(projected)}</strong> este mes (${Math.round((projected / income) * 100)}% de tu ingreso).</p></div>`;
         insights.innerHTML = html + insights.innerHTML;
-        if (window.lucide) lucide.createIcons();
+        if (window.lucide) lucide.createIcons({ node: insights });
       }
     }
   }
@@ -610,7 +688,7 @@ const Dashboard = (() => {
           </div>
           <div class="dashboard-ticket-info">
             <span class="dashboard-ticket-merchant">
-              ${t.parsedMerchant ? escapeHtml(t.parsedMerchant) : '<span style="color:var(--text-muted)">Sin procesar</span>'}
+              ${t.parsedMerchant ? Api.escapeHtml(t.parsedMerchant) : '<span style="color:var(--text-muted)">Sin procesar</span>'}
             </span>
             <span class="dashboard-ticket-date">${Api.formatRelativeDate(t.createdAt)}</span>
           </div>
@@ -618,7 +696,7 @@ const Dashboard = (() => {
             ${t.parsedAmount ? Api.formatCurrency(t.parsedAmount) : '—'}
           </span>
         </div>`).join('');
-      if (window.lucide) lucide.createIcons();
+      if (window.lucide) lucide.createIcons({ node: container });
     } catch {
       container.innerHTML = '<div class="empty-state-sm">Error cargando tickets.</div>';
     }
@@ -637,19 +715,6 @@ const Dashboard = (() => {
     }
 
     const total = monthTotal || byCategory.reduce((s, c) => s + (c.total || 0), 0);
-
-    const CATEGORY_META = {
-      FOOD:          { icon: 'shopping-cart', label: 'Alimentación' },
-      TRANSPORT:     { icon: 'car',          label: 'Transporte' },
-      ENTERTAINMENT: { icon: 'film',         label: 'Entretenimiento' },
-      HEALTH:        { icon: 'heart',        label: 'Salud' },
-      EDUCATION:     { icon: 'book-open',    label: 'Educación' },
-      CLOTHING:      { icon: 'tag',          label: 'Ropa' },
-      TECHNOLOGY:    { icon: 'monitor',      label: 'Tecnología' },
-      HOME:          { icon: 'home',         label: 'Hogar' },
-      SERVICES:      { icon: 'wrench',       label: 'Servicios' },
-      OTHER:         { icon: 'package',      label: 'Otros' },
-    };
 
     const palette = getChartPalette();
     const top = byCategory.slice(0, 6);
@@ -675,15 +740,7 @@ const Dashboard = (() => {
         </div>`;
     }).join('');
 
-    if (window.lucide) lucide.createIcons();
-  }
-
-  function escapeHtml(str = '') {
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+    if (window.lucide) lucide.createIcons({ node: container });
   }
 
   return { init };

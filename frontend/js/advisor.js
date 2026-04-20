@@ -36,7 +36,7 @@ const Advisor = (() => {
       allUsers = users.filter((u) => u.role === 'USER'); // show only regular users
       renderUsersGrid(allUsers);
     } catch (err) {
-      grid.innerHTML = `<div class="empty-state-sm">Error cargando usuarios: ${esc(err.message)}</div>`;
+      grid.innerHTML = `<div class="empty-state-sm">Error cargando usuarios: ${Api.escapeHtml(err.message)}</div>`;
     }
   }
 
@@ -53,8 +53,8 @@ const Advisor = (() => {
       <div class="user-card" onclick="Advisor.selectUser('${u.id}')">
         <div class="user-avatar">${Api.getInitials(u.name)}</div>
         <div class="user-card-info">
-          <div class="user-card-name">${esc(u.name)}</div>
-          <div class="user-card-email">${esc(u.email)}</div>
+          <div class="user-card-name">${Api.escapeHtml(u.name)}</div>
+          <div class="user-card-email">${Api.escapeHtml(u.email)}</div>
           <div class="user-card-meta">
             ${u._count?.expenses || 0} gasto${u._count?.expenses !== 1 ? 's' : ''}
             &nbsp;·&nbsp;
@@ -251,9 +251,9 @@ const Advisor = (() => {
 
       list.innerHTML = recs.map((r) => `
         <div class="rec-item rec-${r.type}">
-          ${esc(r.message)}
+          ${Api.escapeHtml(r.message)}
           <div class="rec-meta">
-            <span>${r.advisor ? esc(r.advisor.name) : 'Sistema'}</span>
+            <span>${r.advisor ? Api.escapeHtml(r.advisor.name) : 'Sistema'}</span>
             <span>${Api.formatRelativeDate(r.createdAt)}</span>
           </div>
         </div>`).join('');
@@ -555,11 +555,6 @@ const Advisor = (() => {
   function destroyAllCharts() {
     Object.keys(advisorCharts).forEach((k) => { advisorCharts[k]?.destroy(); });
     advisorCharts = {};
-  }
-
-  function esc(str = '') {
-    return String(str)
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
   function cssVar(name, fallback) {
