@@ -43,6 +43,10 @@ export class ExpensesController {
   @ApiQuery({ name: 'category', required: false, enum: Category })
   @ApiQuery({ name: 'startDate', required: false })
   @ApiQuery({ name: 'endDate', required: false })
+  @ApiQuery({ name: 'merchant', required: false, description: 'Buscar por nombre de comercio (parcial, insensible a mayúsculas)' })
+  @ApiQuery({ name: 'tag', required: false, description: 'Filtrar por etiqueta exacta' })
+  @ApiQuery({ name: 'minAmount', required: false, description: 'Monto mínimo' })
+  @ApiQuery({ name: 'maxAmount', required: false, description: 'Monto máximo' })
   @ApiQuery({ name: 'page', required: false })
   @ApiQuery({ name: 'limit', required: false })
   findAll(
@@ -51,6 +55,10 @@ export class ExpensesController {
     @Query('category') category?: Category,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
+    @Query('merchant') merchant?: string,
+    @Query('tag') tag?: string,
+    @Query('minAmount') minAmount?: string,
+    @Query('maxAmount') maxAmount?: string,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
   ) {
@@ -61,9 +69,19 @@ export class ExpensesController {
       category,
       startDate,
       endDate,
+      merchant,
+      tag,
+      minAmount: minAmount ? Number(minAmount) : undefined,
+      maxAmount: maxAmount ? Number(maxAmount) : undefined,
       page: page ? Number(page) : 1,
       limit: limit ? Number(limit) : 20,
     });
+  }
+
+  @Get('tags')
+  @ApiOperation({ summary: 'Obtener todas las etiquetas únicas del usuario autenticado' })
+  getMyTags(@Request() req) {
+    return this.expensesService.getUserTags(req.user.id);
   }
 
   @Get('analytics')

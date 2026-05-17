@@ -86,6 +86,7 @@ const Dashboard = (() => {
       renderCategoryBars(data.byCategory, data.currentMonth?.total);
       renderSavingsCard(data);
       renderSavingsAlert(data);
+      renderFinancialProfileBadge(data.financialProfile);
 
       // Show unusual expenses alert if any
       if (data.unusualExpenses && data.unusualExpenses.length > 0) {
@@ -700,6 +701,24 @@ const Dashboard = (() => {
     } catch {
       container.innerHTML = '<div class="empty-state-sm">Error cargando tickets.</div>';
     }
+  }
+
+  // ── Perfil financiero badge ────────────────────────────────────────
+  function renderFinancialProfileBadge(profile) {
+    const el = document.getElementById('dashboard-financial-profile');
+    if (!el || !profile) return;
+
+    const PROFILE_META = {
+      IMPULSIVO:   { label: 'Perfil: Impulsivo',   color: '#dc3f4e', icon: 'trending-up' },
+      ACTIVO:      { label: 'Perfil: Activo',       color: '#da8b19', icon: 'activity' },
+      EQUILIBRADO: { label: 'Perfil: Equilibrado',  color: '#2f8fff', icon: 'bar-chart-2' },
+      AHORRADOR:   { label: 'Perfil: Ahorrador',    color: '#13a58b', icon: 'piggy-bank' },
+    };
+
+    const meta = PROFILE_META[profile] || { label: `Perfil: ${profile}`, color: '#94a3b8', icon: 'user' };
+    el.innerHTML = `<span style="display:inline-flex;align-items:center;gap:.35rem;background:${meta.color}22;color:${meta.color};border:1px solid ${meta.color}44;border-radius:99px;padding:.2rem .75rem;font-size:.82rem;font-weight:600"><i data-lucide="${meta.icon}" style="width:1em;height:1em"></i>${meta.label}</span>`;
+    el.classList.remove('hidden');
+    if (window.lucide) lucide.createIcons({ node: el });
   }
 
   // ── Top categorías del mes (barras reales) ────────────────────────

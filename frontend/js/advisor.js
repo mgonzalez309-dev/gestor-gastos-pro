@@ -325,7 +325,8 @@ const Advisor = (() => {
       });
       closeRecModal();
       await loadUserRecommendations(selectedUser.id);
-      Api.showAlert('rec-alert', 'Recomendación enviada.', 'success');
+      // FIX: usar alerta fuera del modal (el modal ya fue cerrado)
+      Api.showAlert('advisor-page-alert', 'Recomendación enviada correctamente.', 'success');
     } catch (err) {
       Api.showAlert(alertEl, err.message, 'error');
     } finally {

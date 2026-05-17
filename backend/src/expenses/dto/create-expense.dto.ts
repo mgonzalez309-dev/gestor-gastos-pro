@@ -5,6 +5,7 @@ import {
   IsDateString,
   IsOptional,
   IsNotEmpty,
+  IsArray,
   Min,
   MaxLength,
 } from 'class-validator';
@@ -36,6 +37,16 @@ export class CreateExpenseDto {
   @IsOptional()
   @MaxLength(500)
   description?: string;
+
+  @ApiPropertyOptional({
+    example: ['vacaciones', 'familia'],
+    description: 'Etiquetas personalizadas (máx. 10, 30 chars c/u)',
+    type: [String],
+  })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  tags?: string[];
 
   @ApiPropertyOptional({ description: 'ID del ticket asociado (opcional)' })
   @IsString()

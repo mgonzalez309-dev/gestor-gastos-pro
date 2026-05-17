@@ -24,6 +24,7 @@ const Expenses = (() => {
   let editingId    = null;
   let deletingId   = null;
   let currentFilters = {};
+  let activeTags   = []; // etiquetas en el chip-input del modal
 
   // ── Init ──────────────────────────────────────────────────────────
   function init() {
@@ -32,6 +33,8 @@ const Expenses = (() => {
     bindReportModal();
     bindModal();
     bindDeleteModal();
+    bindTagInput();
+    loadUserTagSuggestions();
     loadExpenses();
 
     // Set today as default date in form
@@ -71,8 +74,10 @@ const Expenses = (() => {
         <tr>
           <td><strong>${Api.escapeHtml(e.merchant)}</strong></td>
           <td>${Api.categoryPill(e.category)}</td>
-          <td class="text-muted" style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
-            ${Api.escapeHtml(e.description || '-')}
+          <td>
+            ${(e.tags && e.tags.length)
+              ? e.tags.map((t) => `<span class="tag-chip tag-chip--sm">${Api.escapeHtml(t)}</span>`).join(' ')
+              : '<span class="text-muted" style="font-size:.8rem">—</span>'}
           </td>
           <td>${Api.formatDate(e.date)}</td>
           <td class="text-right"><strong>${Api.formatCurrency(e.amount)}</strong></td>
@@ -135,9 +140,13 @@ const Expenses = (() => {
 
   function buildQueryParamsFromFilters(page, limit, filters) {
     const params = new URLSearchParams({ page: String(page), limit: String(limit) });
-    if (filters.category) params.set('category', filters.category);
+    if (filters.category)  params.set('category',  filters.category);
+    if (filters.merchant)  params.set('merchant',  filters.merchant);
+    if (filters.tag)       params.set('tag',       filters.tag);
     if (filters.startDate) params.set('startDate', filters.startDate);
-    if (filters.endDate) params.set('endDate', filters.endDate);
+    if (filters.endDate)   params.set('endDate',   filters.endDate);
+    if (filters.minAmount !== undefined && filters.minAmount !== '') params.set('minAmount', filters.minAmount);
+    if (filters.maxAmount !== undefined && filters.maxAmount !== '') params.set('maxAmount', filters.maxAmount);
     return params;
   }
 
@@ -183,8 +192,12 @@ const Expenses = (() => {
     document.getElementById('btn-filter')?.addEventListener('click', applyFilters);
 
     document.getElementById('btn-clear-filter')?.addEventListener('click', () => {
+      document.getElementById('filter-merchant').value  = '';
+      document.getElementById('filter-tag').value       = '';
       document.getElementById('filter-category').value  = '';
       document.getElementById('filter-period').value    = '';
+      document.getElementById('filter-min-amount').value = '';
+      document.getElementById('filter-max-amount').value = '';
       document.querySelectorAll('.filter-period-field').forEach(el => el.style.display = 'none');
       currentFilters = {};
       loadExpenses(1);
@@ -197,10 +210,17 @@ const Expenses = (() => {
 
   function applyFilters() {
     const parsed = collectFiltersFromForm('main');
+    const minAmt = document.getElementById('filter-min-amount')?.value;
+    const maxAmt = document.getElementById('filter-max-amount')?.value;
+    const tagVal = document.getElementById('filter-tag')?.value.trim();
     currentFilters = {
-      category: parsed.category,
+      merchant:  document.getElementById('filter-merchant')?.value.trim() || '',
+      tag:       tagVal || '',
+      category:  parsed.category,
       startDate: parsed.startDate,
-      endDate: parsed.endDate,
+      endDate:   parsed.endDate,
+      minAmount: minAmt !== '' ? minAmt : undefined,
+      maxAmount: maxAmt !== '' ? maxAmt : undefined,
     };
     loadExpenses(1);
   }
@@ -1212,6 +1232,8 @@ const Expenses = (() => {
       document.getElementById('exp-category').value    = expense.category;
       document.getElementById('exp-date').value        = expense.date?.split('T')[0] || '';
       document.getElementById('exp-description').value = expense.description || '';
+      // Cargar tags existentes en el chip-input
+      setTagsInInput(expense.tags || []);
       document.getElementById('expense-modal').classList.remove('hidden');
     } catch (err) {
       Api.showAlert('expenses-alert', err.message, 'error');
@@ -1227,6 +1249,7 @@ const Expenses = (() => {
     document.getElementById('expense-form')?.reset();
     Api.hideAlert('expense-form-alert');
     document.getElementById('expense-id').value = '';
+    setTagsInInput([]);
   }
 
   async function saveExpense() {
@@ -1244,7 +1267,8 @@ const Expenses = (() => {
     if (!category)            return Api.showAlert(alertEl, 'Seleccioná una categoría.');
     if (!date)                return Api.showAlert(alertEl, 'La fecha es obligatoria.');
 
-    const payload = { merchant, amount, category, date, description: description || undefined };
+    const tags = activeTags.length ? activeTags : [];
+    const payload = { merchant, amount, category, date, description: description || undefined, tags };
 
     const saveBtn = document.getElementById('expense-save-btn');
     saveBtn.disabled = true;
@@ -1308,7 +1332,77 @@ const Expenses = (() => {
     }
   }
 
-  return { init, goPage, openEdit, confirmDelete };
+  // ══════════════════════════════════════════════════════════════════
+  // TAG CHIP INPUT
+  // ══════════════════════════════════════════════════════════════════
+
+  function bindTagInput() {
+    const input   = document.getElementById('exp-tags-input');
+    const wrapper = document.getElementById('tag-input-wrapper');
+    if (!input || !wrapper) return;
+
+    // Focus wrapper → focus input
+    wrapper.addEventListener('click', () => input.focus());
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ',') {
+        e.preventDefault();
+        const val = input.value.trim().replace(/,$/, '');
+        if (val) { addTag(val); input.value = ''; }
+      } else if (e.key === 'Backspace' && !input.value && activeTags.length) {
+        removeTag(activeTags.length - 1);
+      }
+    });
+
+    input.addEventListener('blur', () => {
+      const val = input.value.trim();
+      if (val) { addTag(val); input.value = ''; }
+    });
+  }
+
+  function addTag(raw) {
+    const tag = raw.toLowerCase().trim().slice(0, 30);
+    if (!tag || activeTags.includes(tag) || activeTags.length >= 10) return;
+    activeTags.push(tag);
+    renderChips();
+  }
+
+  function removeTag(index) {
+    activeTags.splice(index, 1);
+    renderChips();
+  }
+
+  function setTagsInInput(tags) {
+    activeTags = [...tags];
+    renderChips();
+  }
+
+  function renderChips() {
+    const container = document.getElementById('tag-chips');
+    if (!container) return;
+    container.innerHTML = activeTags.map((t, i) => `
+      <span class="tag-chip">
+        ${Api.escapeHtml(t)}
+        <button type="button" class="tag-chip-remove" aria-label="Eliminar etiqueta ${t}" onclick="Expenses._removeTag(${i})">×</button>
+      </span>`).join('');
+    // sync hidden input
+    const hidden = document.getElementById('exp-tags-hidden');
+    if (hidden) hidden.value = activeTags.join(',');
+  }
+
+  async function loadUserTagSuggestions() {
+    try {
+      const tags = await Api.get('/expenses/tags');
+      // Poblar datalists para autocompletar
+      ['tag-suggestions', 'filter-tag-suggestions'].forEach((id) => {
+        const dl = document.getElementById(id);
+        if (!dl) return;
+        dl.innerHTML = tags.map((t) => `<option value="${Api.escapeHtml(t)}">`).join('');
+      });
+    } catch { /* no tags yet */ }
+  }
+
+  return { init, goPage, openEdit, confirmDelete, _removeTag: removeTag };
 })();
 
 window.Expenses = Expenses;

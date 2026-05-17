@@ -17,6 +17,7 @@ import {
 import { Role } from '@prisma/client';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateBudgetsDto } from './dto/update-budgets.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -63,5 +64,27 @@ export class UsersController {
     @Body() dto: UpdateUserDto,
   ) {
     return this.usersService.update(id, req.user.id, req.user.role, dto);
+  }
+
+  @Get(':id/budgets')
+  @ApiOperation({ summary: 'Obtener presupuestos mensuales por categoría del usuario' })
+  getBudgets(@Param('id') id: string, @Request() req) {
+    if (req.user.role !== Role.ADVISOR && req.user.id !== id) {
+      throw new ForbiddenException('No tenés permiso para ver estos presupuestos.');
+    }
+    return this.usersService.getBudgets(id);
+  }
+
+  @Put(':id/budgets')
+  @ApiOperation({ summary: 'Guardar presupuestos mensuales por categoría' })
+  updateBudgets(
+    @Param('id') id: string,
+    @Request() req,
+    @Body() dto: UpdateBudgetsDto,
+  ) {
+    if (req.user.role !== Role.ADVISOR && req.user.id !== id) {
+      throw new ForbiddenException('Solo podés editar tus propios presupuestos.');
+    }
+    return this.usersService.updateBudgets(id, dto.budgets);
   }
 }

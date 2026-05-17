@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -182,6 +182,39 @@
             </div>
           </div>
 
+          <!-- Presupuestos mensuales por categoría -->
+          <div class="card" id="category-budgets-card">
+            <div class="budget-summary-header" style="margin-bottom:.75rem">
+              <span class="budget-summary-icon"><i data-lucide="sliders"></i></span>
+              <h3 class="card-title">Presupuestos por categoría</h3>
+            </div>
+            <p class="card-subtitle" style="margin-bottom:1rem">Definí un límite mensual para cada categoría de gasto. Dejá en 0 para no limitar.</p>
+
+            <div id="category-budgets-form">
+              <!-- Generado dinámicamente por profile.js -->
+              <div class="empty-state-sm">Cargando...</div>
+            </div>
+
+            <div class="card-actions" style="margin-top:1rem">
+              <button class="btn btn-secondary" id="budgets-save-btn">
+                <span class="btn-text">Guardar presupuestos</span>
+                <span class="btn-spinner hidden">Guardando...</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Perfil financiero del usuario -->
+          <div class="card" id="financial-profile-card" style="display:none">
+            <div class="budget-summary-header" style="margin-bottom:.75rem">
+              <span class="budget-summary-icon"><i data-lucide="user-check"></i></span>
+              <h3 class="card-title">Tu perfil financiero</h3>
+            </div>
+            <div id="financial-profile-badge" style="text-align:center;padding:.5rem 0">
+              <span id="fp-type-badge" class="category-pill" style="font-size:1rem;padding:.5rem 1.5rem">-</span>
+              <p id="fp-description" class="text-muted" style="margin-top:.5rem;font-size:.85rem"></p>
+            </div>
+          </div>
+
           <div class="card profile-stats-card" id="profile-stats-card">
             <h3 class="card-title">Mi cuenta</h3>
             <div class="profile-stat-row"><span>Gastos registrados</span><strong id="ps-expense-count">-</strong></div>
@@ -230,7 +263,7 @@
   <script src="js/runtime-config.js"></script>
   <script src="js/api.js"></script>
   <script src="js/components.js"></script>
-  <script src="js/auth.js"></script>
+  <script src="js/notifications.js"></script><script src="js/auth.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
   <script src="js/profile.js"></script>

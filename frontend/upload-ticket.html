@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -36,30 +36,64 @@
       </div>
 
       <section id="step-1" class="section card">
-        <h2 class="card-title">Selecciona la imagen del ticket</h2>
-        <p class="card-subtitle">Formatos aceptados: JPG, PNG, WEBP. Maximo: 10 MB</p>
-
-        <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="Zona de carga de archivo">
-          <div class="dropzone-idle" id="dropzone-idle">
-            <div class="dropzone-icon">OCR</div>
-            <p class="dropzone-text">Arrastra y suelta tu ticket aqui</p>
-            <p class="dropzone-hint">o haz clic para seleccionar un archivo</p>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem">
+          <div>
+            <h2 class="card-title" style="margin:0">Selecciona la imagen del ticket</h2>
+            <p class="card-subtitle" style="margin:.25rem 0 0">Formatos aceptados: JPG, PNG, WEBP. Maximo: 10 MB</p>
           </div>
-          <div class="dropzone-preview hidden" id="dropzone-preview">
-            <img id="preview-img" src="" alt="Vista previa del ticket" />
-            <p id="preview-name" class="dropzone-filename"></p>
-          </div>
-          <input type="file" id="ticket-file-input" accept="image/*" class="hidden" />
+          <!-- Modo carga múltiple -->
+          <label class="toggle-label" style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.85rem">
+            <input type="checkbox" id="multi-upload-toggle" style="cursor:pointer" />
+            <span>Carga múltiple</span>
+          </label>
         </div>
 
-        <div id="upload-alert" class="alert hidden mt-1"></div>
+        <!-- Single upload (default) -->
+        <div id="single-upload-mode">
+          <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="Zona de carga de archivo">
+            <div class="dropzone-idle" id="dropzone-idle">
+              <div class="dropzone-icon">OCR</div>
+              <p class="dropzone-text">Arrastra y suelta tu ticket aqui</p>
+              <p class="dropzone-hint">o haz clic para seleccionar un archivo</p>
+            </div>
+            <div class="dropzone-preview hidden" id="dropzone-preview">
+              <img id="preview-img" src="" alt="Vista previa del ticket" />
+              <p id="preview-name" class="dropzone-filename"></p>
+            </div>
+            <input type="file" id="ticket-file-input" accept="image/*" class="hidden" />
+          </div>
 
-        <div class="card-actions">
-          <button class="btn btn-ghost" id="btn-clear-upload" disabled>Limpiar</button>
-          <button class="btn btn-primary" id="btn-upload" disabled>
-            <span id="btn-upload-text">Procesar con OCR</span>
-            <span id="btn-upload-spinner" class="hidden">Procesando...</span>
-          </button>
+          <div id="upload-alert" class="alert hidden mt-1"></div>
+
+          <div class="card-actions">
+            <button class="btn btn-ghost" id="btn-clear-upload" disabled>Limpiar</button>
+            <button class="btn btn-primary" id="btn-upload" disabled>
+              <span id="btn-upload-text">Procesar con OCR</span>
+              <span id="btn-upload-spinner" class="hidden">Procesando...</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Multi upload mode -->
+        <div id="multi-upload-mode" class="hidden">
+          <div class="dropzone" id="multi-dropzone" role="button" tabindex="0" aria-label="Zona de carga de múltiples archivos">
+            <div class="dropzone-idle" id="multi-dropzone-idle">
+              <div class="dropzone-icon">OCR×N</div>
+              <p class="dropzone-text">Arrastra y suelta varios tickets aqui</p>
+              <p class="dropzone-hint">o haz clic para seleccionar múltiples archivos</p>
+            </div>
+            <input type="file" id="multi-file-input" accept="image/*" multiple class="hidden" />
+          </div>
+
+          <div id="multi-queue" class="multi-queue hidden"></div>
+          <div id="multi-upload-alert" class="alert hidden mt-1"></div>
+
+          <div class="card-actions">
+            <button class="btn btn-ghost" id="btn-multi-clear" disabled>Limpiar selección</button>
+            <button class="btn btn-primary" id="btn-multi-upload" disabled>
+              <span id="btn-multi-text">Procesar todos con OCR</span>
+            </button>
+          </div>
         </div>
       </section>
 
@@ -172,7 +206,7 @@
   <script src="js/runtime-config.js"></script>
   <script src="js/api.js"></script>
   <script src="js/components.js"></script>
-  <script src="js/auth.js"></script>
+  <script src="js/notifications.js"></script><script src="js/auth.js"></script>
   <script src="js/tickets.js"></script>
   <script>
     (async () => {
