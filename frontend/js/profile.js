@@ -24,7 +24,11 @@ const Profile = (() => {
     }
 
     loadAvatar(user.id, freshUser.avatarUrl);
-    await loadBudgetSummary();
+    await Promise.all([
+      loadBudgetSummary(),
+      loadCategoryBudgets(user.id),
+      loadFinancialProfile(),
+    ]);
     bindEvents();
   }
 
@@ -450,11 +454,112 @@ const Profile = (() => {
     }
   }
 
+  // ── Presupuestos por categoría ────────────────────────────────────
+  const CATEGORIES = [
+    { key: 'FOOD',          label: 'Alimentación' },
+    { key: 'TRANSPORT',     label: 'Transporte' },
+    { key: 'ENTERTAINMENT', label: 'Entretenimiento' },
+    { key: 'HEALTH',        label: 'Salud' },
+    { key: 'EDUCATION',     label: 'Educación' },
+    { key: 'CLOTHING',      label: 'Ropa' },
+    { key: 'TECHNOLOGY',    label: 'Tecnología' },
+    { key: 'HOME',          label: 'Hogar' },
+    { key: 'SERVICES',      label: 'Servicios' },
+    { key: 'OTHER',         label: 'Otros' },
+  ];
+
+  async function loadCategoryBudgets(userId) {
+    const container = document.getElementById('category-budgets-form');
+    if (!container) return;
+
+    let existing = {};
+    try {
+      const res = await Api.get(`/users/${userId}/budgets`);
+      existing = res.budgets || {};
+    } catch { /* first time — use empty */ }
+
+    container.innerHTML = CATEGORIES.map((cat) => `
+      <div class="budget-category-row">
+        <label class="budget-category-label" for="budget-${cat.key}">${cat.label}</label>
+        <div class="budget-category-input-wrap">
+          <input
+            type="number"
+            id="budget-${cat.key}"
+            data-category="${cat.key}"
+            class="form-input form-input--sm budget-category-input"
+            min="0"
+            step="1"
+            placeholder="0 = sin límite"
+            value="${existing[cat.key] || ''}"
+          />
+          <span class="budget-currency-badge">${Api.getUser()?.currency || 'ARS'}</span>
+        </div>
+      </div>`).join('');
+  }
+
+  async function saveCategoryBudgets() {
+    const user = Api.getUser();
+    if (!user) return;
+
+    const btn     = document.getElementById('budgets-save-btn');
+    const btnText = btn?.querySelector('.btn-text');
+    const btnSpin = btn?.querySelector('.btn-spinner');
+
+    const budgets = {};
+    CATEGORIES.forEach((cat) => {
+      const val = parseFloat(document.getElementById(`budget-${cat.key}`)?.value || '0');
+      if (!isNaN(val) && val >= 0) budgets[cat.key] = val;
+    });
+
+    if (btn) btn.disabled = true;
+    btnText?.classList.add('hidden');
+    btnSpin?.classList.remove('hidden');
+
+    try {
+      await Api.put(`/users/${user.id}/budgets`, { budgets });
+      Api.showAlert('profile-page-alert', 'Presupuestos guardados correctamente.', 'success');
+    } catch (err) {
+      Api.showAlert('profile-page-alert', err.message, 'error');
+    } finally {
+      if (btn) btn.disabled = false;
+      btnText?.classList.remove('hidden');
+      btnSpin?.classList.add('hidden');
+    }
+  }
+
+  // ── Perfil financiero ─────────────────────────────────────────────
+  async function loadFinancialProfile() {
+    const card = document.getElementById('financial-profile-card');
+    if (!card) return;
+
+    try {
+      const data = await Api.get('/expenses/analytics');
+      const profile = data.financialProfile;
+      if (!profile) return;
+
+      card.style.display = '';
+      const badge = document.getElementById('fp-type-badge');
+      const desc  = document.getElementById('fp-description');
+
+      const PROFILE_META = {
+        IMPULSIVO:   { label: 'Impulsivo',   color: '#dc3f4e', text: 'Tu gasto mensual supera el 90% de tu ingreso. Es momento de revisar tus hábitos financieros.' },
+        ACTIVO:      { label: 'Activo',       color: '#da8b19', text: 'Gastás entre el 70-90% de tu ingreso. Tenés margen para ahorrar más cada mes.' },
+        EQUILIBRADO: { label: 'Equilibrado',  color: '#2f8fff', text: 'Gastás entre el 50-70% de tu ingreso. Buen balance entre consumo y ahorro.' },
+        AHORRADOR:   { label: 'Ahorrador',    color: '#13a58b', text: 'Gastás menos del 50% de tu ingreso. ¡Excelente hábito financiero!' },
+      };
+
+      const meta = PROFILE_META[profile] || { label: profile, color: '#94a3b8', text: '' };
+      if (badge) { badge.textContent = meta.label; badge.style.background = meta.color + '22'; badge.style.color = meta.color; badge.style.border = `1px solid ${meta.color}44`; }
+      if (desc)  desc.textContent = meta.text;
+    } catch { /* analytics might fail if no expenses */ }
+  }
+
   // ── Bind events ───────────────────────────────────────────────────
   function bindEvents() {
     document.getElementById('profile-save-btn')?.addEventListener('click', saveProfile);
     document.getElementById('income-save-btn')?.addEventListener('click', saveIncome);
     document.getElementById('savings-save-btn')?.addEventListener('click', saveSavings);
+    document.getElementById('budgets-save-btn')?.addEventListener('click', saveCategoryBudgets);
 
     // Sync currency badge while selecting currency
     document.getElementById('p-currency')?.addEventListener('change', (e) => {

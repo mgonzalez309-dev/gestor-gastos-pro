@@ -79,6 +79,11 @@ const Auth = (() => {
 
     // Theme UI
     injectThemeSwitcher();
+
+    // Notificaciones automáticas (campana + browser push)
+    if (window.Notifications) {
+      Notifications.init().catch(() => {});
+    }
   }
 
   function initPublicTheme() {

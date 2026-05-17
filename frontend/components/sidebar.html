@@ -25,6 +25,27 @@
     </a>
   </nav>
 
+  <!-- Campana de notificaciones -->
+  <div class="notif-bell-wrap" id="notif-bell-wrap">
+    <button class="notif-bell-btn" id="notif-bell-btn" aria-label="Notificaciones" type="button">
+      <i data-lucide="bell"></i>
+      <span class="notif-badge hidden" id="notif-badge">0</span>
+    </button>
+    <!-- Dropdown panel -->
+    <div class="notif-panel hidden" id="notif-panel">
+      <div class="notif-panel-header">
+        <span class="notif-panel-title">Notificaciones</span>
+        <div style="display:flex;gap:.5rem">
+          <button class="btn btn-ghost btn-sm" id="notif-mark-all-btn" type="button">Leer todo</button>
+          <button class="btn btn-ghost btn-sm" id="notif-clear-all-btn" type="button" style="color:var(--color-danger,#e53e3e)">Limpiar</button>
+        </div>
+      </div>
+      <div class="notif-list" id="notif-list">
+        <div class="notif-empty">Sin notificaciones</div>
+      </div>
+    </div>
+  </div>
+
   <div class="sidebar-footer">
     <div class="user-info" id="sidebar-user" title="Mi perfil" style="cursor:pointer">
       <div class="user-avatar" id="user-avatar-initials">JD</div>

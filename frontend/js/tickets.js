@@ -14,6 +14,7 @@ const Tickets = (() => {
     bindStep3Form();
     bindSidebarActions();
     bindDeleteModal();
+    bindMultiUpload();
     loadTicketHistory();
   }
 
@@ -389,6 +390,134 @@ const Tickets = (() => {
       if (n < step)  indicator.classList.add('done');
       if (n === step) indicator.classList.add('active');
     });
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  // CARGA MÚLTIPLE DE TICKETS
+  // ══════════════════════════════════════════════════════════════════
+
+  let multiFiles = [];
+
+  function bindMultiUpload() {
+    const toggle = document.getElementById('multi-upload-toggle');
+    if (!toggle) return;
+
+    toggle.addEventListener('change', () => {
+      const isMulti = toggle.checked;
+      document.getElementById('single-upload-mode')?.classList.toggle('hidden', isMulti);
+      document.getElementById('multi-upload-mode')?.classList.toggle('hidden', !isMulti);
+    });
+
+    const zone    = document.getElementById('multi-dropzone');
+    const input   = document.getElementById('multi-file-input');
+    const clearBtn = document.getElementById('btn-multi-clear');
+    const uploadBtn = document.getElementById('btn-multi-upload');
+
+    if (!zone) return;
+
+    zone.addEventListener('click', () => input?.click());
+    zone.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') input?.click(); });
+
+    zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      zone.classList.remove('drag-over');
+      const files = Array.from(e.dataTransfer?.files || []).filter((f) => f.type.startsWith('image/'));
+      if (files.length) handleMultiFilesSelected(files);
+    });
+
+    input?.addEventListener('change', () => {
+      const files = Array.from(input.files || []);
+      if (files.length) handleMultiFilesSelected(files);
+    });
+
+    clearBtn?.addEventListener('click', () => {
+      multiFiles = [];
+      if (input) input.value = '';
+      document.getElementById('multi-queue')?.classList.add('hidden');
+      clearBtn.disabled   = true;
+      uploadBtn.disabled  = true;
+      Api.hideAlert('multi-upload-alert');
+    });
+
+    uploadBtn?.addEventListener('click', processMultiFiles);
+  }
+
+  function handleMultiFilesSelected(files) {
+    const MAX_MB = 10;
+    const allowed = ['image/jpeg','image/jpg','image/png','image/webp','image/gif','image/bmp','image/tiff'];
+    Api.hideAlert('multi-upload-alert');
+
+    const valid = files.filter((f) => allowed.includes(f.type) && f.size <= MAX_MB * 1024 * 1024);
+    const invalid = files.length - valid.length;
+
+    if (invalid > 0) {
+      Api.showAlert('multi-upload-alert', `${invalid} archivo(s) ignorados (formato o tamaño incorrecto).`, 'warning');
+    }
+
+    if (!valid.length) return;
+    multiFiles = valid;
+    renderMultiQueue();
+    document.getElementById('btn-multi-clear').disabled  = false;
+    document.getElementById('btn-multi-upload').disabled = false;
+  }
+
+  function renderMultiQueue() {
+    const container = document.getElementById('multi-queue');
+    if (!container) return;
+    container.classList.remove('hidden');
+    container.innerHTML = multiFiles.map((f, i) => `
+      <div class="multi-queue-item" id="mqitem-${i}">
+        <span class="multi-queue-name">${Api.escapeHtml(f.name)}</span>
+        <span class="multi-queue-size">${(f.size / 1024).toFixed(0)} KB</span>
+        <span class="multi-queue-status" id="mqstatus-${i}">Pendiente</span>
+      </div>`).join('');
+  }
+
+  function setMultiItemStatus(i, text, cls = '') {
+    const el = document.getElementById(`mqstatus-${i}`);
+    if (!el) return;
+    el.textContent = text;
+    el.className = `multi-queue-status ${cls}`;
+  }
+
+  async function processMultiFiles() {
+    if (!multiFiles.length) return;
+
+    const uploadBtn = document.getElementById('btn-multi-upload');
+    const clearBtn  = document.getElementById('btn-multi-clear');
+    uploadBtn.disabled = true;
+    clearBtn.disabled  = true;
+
+    let successCount = 0;
+    let failCount    = 0;
+
+    for (let i = 0; i < multiFiles.length; i++) {
+      const file = multiFiles[i];
+      setMultiItemStatus(i, 'Subiendo...', 'status-loading');
+
+      try {
+        const fd = new FormData();
+        fd.append('file', file);
+        const res = await Api.upload('/tickets/upload', fd);
+        setMultiItemStatus(i, 'Procesando OCR...', 'status-loading');
+        await pollTicketUntilProcessed(res.id);
+        setMultiItemStatus(i, 'Listo ✓', 'status-ok');
+        successCount++;
+      } catch (err) {
+        setMultiItemStatus(i, `Error: ${err.message.slice(0, 40)}`, 'status-error');
+        failCount++;
+      }
+    }
+
+    loadTicketHistory();
+
+    const msg = `Procesados: ${successCount} OK${failCount ? `, ${failCount} con error` : ''}.`;
+    Api.showAlert('multi-upload-alert', msg, failCount === 0 ? 'success' : 'warning');
+
+    uploadBtn.disabled = false;
+    clearBtn.disabled  = false;
   }
 
   // ── Utilities ─────────────────────────────────────────────────────

@@ -46,14 +46,16 @@ model User {
   age           Int?
   monthlyIncome Float?   @map("monthly_income")
   savingsGoal   Float?   @map("savings_goal")
-  avatarUrl     String?  @map("avatar_url")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  avatarUrl       String?  @map("avatar_url")
+  categoryBudgets Json?    @map("category_budgets") // {"FOOD": 5000, "TRANSPORT": 2000, ...}
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
   expenses               Expense[]
   tickets                Ticket[]
   receivedRecommendations Recommendation[] @relation("UserRecommendations")
   givenRecommendations    Recommendation[] @relation("AdvisorRecommendations")
+  notifications          Notification[]
 
   @@map("users")
 }
@@ -66,6 +68,7 @@ model Expense {
   category    Category @default(OTHER)
   date        DateTime
   description String?
+  tags        String[] @default([])  // etiquetas personalizadas del usuario
   ticketId    String?  @map("ticket_id")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
@@ -106,4 +109,19 @@ model Recommendation {
   advisor User? @relation("AdvisorRecommendations", fields: [advisorId], references: [id])
 
   @@map("recommendations")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  type      String   // BUDGET_ALERT | UNUSUAL_EXPENSE | MONTHLY_GROWTH | SAVINGS_RISK | GENERAL
+  title     String
+  message   String
+  isRead    Boolean  @default(false) @map("is_read")
+  metadata  Json?    // datos extra (categoría, monto, etc.)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
 }

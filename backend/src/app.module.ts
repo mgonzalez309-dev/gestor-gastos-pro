@@ -7,6 +7,7 @@ import { UsersModule } from './users/users.module';
 import { ExpensesModule } from './expenses/expenses.module';
 import { TicketsModule } from './tickets/tickets.module';
 import { RecommendationsModule } from './recommendations/recommendations.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { RecommendationsModule } from './recommendations/recommendations.module'
     ExpensesModule,
     TicketsModule,
     RecommendationsModule,
+    NotificationsModule,
   ],
   providers: [
     {

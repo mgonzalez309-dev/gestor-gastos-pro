@@ -45,6 +45,7 @@ export class UsersService {
         monthlyIncome: true,
         savingsGoal: true,
         avatarUrl: true,
+        categoryBudgets: true,
         createdAt: true,
         _count: {
           select: { expenses: true, tickets: true, receivedRecommendations: true },
@@ -115,6 +116,35 @@ export class UsersService {
         avatarUrl: true,
         updatedAt: true,
       },
+    });
+  }
+
+  async getBudgets(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, categoryBudgets: true },
+    });
+    if (!user) throw new NotFoundException(`Usuario "${userId}" no encontrado.`);
+    return { budgets: (user.categoryBudgets as Record<string, number>) || {} };
+  }
+
+  async updateBudgets(userId: string, budgets: Record<string, number>) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException(`Usuario "${userId}" no encontrado.`);
+
+    // Validate: only positive numbers for known categories
+    const VALID_CATEGORIES = ['FOOD','TRANSPORT','ENTERTAINMENT','HEALTH','EDUCATION','CLOTHING','TECHNOLOGY','HOME','SERVICES','OTHER'];
+    const clean: Record<string, number> = {};
+    for (const [cat, amount] of Object.entries(budgets)) {
+      if (VALID_CATEGORIES.includes(cat) && typeof amount === 'number' && amount >= 0) {
+        clean[cat] = amount;
+      }
+    }
+
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { categoryBudgets: clean },
+      select: { id: true, categoryBudgets: true },
     });
   }
 

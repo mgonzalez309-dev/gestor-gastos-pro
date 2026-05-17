@@ -15,6 +15,10 @@ interface FindAllOptions {
   category?: Category;
   startDate?: string;
   endDate?: string;
+  merchant?: string;
+  tag?: string;
+  minAmount?: number;
+  maxAmount?: number;
   page?: number;
   limit?: number;
 }
@@ -32,13 +36,32 @@ export class ExpensesService {
         category: dto.category,
         date: new Date(dto.date),
         description: dto.description,
+        tags: dto.tags ? this.sanitizeTags(dto.tags) : [],
         ticketId: dto.ticketId,
       },
     });
   }
 
+  private sanitizeTags(tags: string[]): string[] {
+    return [...new Set(
+      tags
+        .map((t) => t.trim().toLowerCase().slice(0, 30))
+        .filter((t) => t.length > 0),
+    )].slice(0, 10);
+  }
+
+  /** Devuelve todas las etiquetas únicas que el usuario ha usado. */
+  async getUserTags(userId: string): Promise<string[]> {
+    const expenses = await this.prisma.expense.findMany({
+      where: { userId },
+      select: { tags: true },
+    });
+    const all = expenses.flatMap((e) => e.tags);
+    return [...new Set(all)].sort();
+  }
+
   async findAll(options: FindAllOptions) {
-    const { requesterId, requesterRole, category, startDate, endDate } = options;
+    const { requesterId, requesterRole, category, startDate, endDate, merchant, tag, minAmount, maxAmount } = options;
     const page = options.page || 1;
     const limit = Math.min(options.limit || 20, 100); // cap at 100 to prevent DoS
     const skip = (page - 1) * limit;
@@ -50,6 +73,13 @@ export class ExpensesService {
     const where: any = {};
     if (targetUserId) where.userId = targetUserId;
     if (category) where.category = category;
+    if (merchant) where.merchant = { contains: merchant, mode: 'insensitive' };
+    if (tag) where.tags = { has: tag.toLowerCase() }; // filtra por etiqueta exacta
+    if (minAmount !== undefined || maxAmount !== undefined) {
+      where.amount = {};
+      if (minAmount !== undefined) where.amount.gte = minAmount;
+      if (maxAmount !== undefined) where.amount.lte = maxAmount;
+    }
     if (startDate || endDate) {
       where.date = {};
       if (startDate) where.date.gte = new Date(startDate);
@@ -114,6 +144,7 @@ export class ExpensesService {
 
     const data: any = { ...dto };
     if (dto.date) data.date = new Date(dto.date);
+    if (dto.tags !== undefined) data.tags = this.sanitizeTags(dto.tags);
 
     return this.prisma.expense.update({ where: { id }, data });
   }
@@ -213,7 +244,7 @@ export class ExpensesService {
       .map(([month, total]) => ({ month, total }))
       .sort((a, b) => a.month.localeCompare(b.month));
 
-    // Unusual expenses detection (amount > 2x average of last 30 days)
+    // Unusual expenses detection (amount > 5x average of last 30 days)
     const avgAmount =
       allExpenses6m.length > 0
         ? allExpenses6m.reduce((sum, e) => sum + e.amount, 0) / allExpenses6m.length
@@ -222,11 +253,12 @@ export class ExpensesService {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+    // CHANGED: threshold 5x (requisito) en vez de 2x
     const unusualExpenses = await this.prisma.expense.findMany({
       where: {
         userId,
         date: { gte: thirtyDaysAgo },
-        amount: { gt: avgAmount * 2 },
+        amount: { gt: avgAmount * 5 },
       },
       orderBy: { amount: 'desc' },
       take: 5,
@@ -237,11 +269,22 @@ export class ExpensesService {
     const monthGrowth =
       prevTotal > 0 ? ((currentTotal - prevTotal) / prevTotal) * 100 : 0;
 
-    // Fetch user's savings goal to include in the response
+    // Fetch user's savings goal and income for profile classification
     const userRecord = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { savingsGoal: true },
+      select: { savingsGoal: true, monthlyIncome: true },
     });
+
+    // Perfil financiero: clasifica al usuario según tasa de gasto/ingreso
+    const income = userRecord?.monthlyIncome || 0;
+    const spendingRate = income > 0 ? currentTotal / income : null;
+    let financialProfile: string | null = null;
+    if (spendingRate !== null) {
+      if (spendingRate > 0.9)      financialProfile = 'IMPULSIVO';
+      else if (spendingRate > 0.7) financialProfile = 'ACTIVO';
+      else if (spendingRate > 0.5) financialProfile = 'EQUILIBRADO';
+      else                         financialProfile = 'AHORRADOR';
+    }
 
     return {
       byCategory: byCategory.map((c) => ({
@@ -266,6 +309,7 @@ export class ExpensesService {
       unusualExpenses,
       averageExpense: Math.round(avgAmount * 100) / 100,
       savingsGoal: userRecord?.savingsGoal ?? null,
+      financialProfile,
     };
   }
 
