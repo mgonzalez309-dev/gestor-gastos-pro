@@ -2419,9 +2419,8 @@ body[data-theme='light'] .tag-text-input { color: #1e2738; }
 
 /* Panel dropdown */
 .notif-panel {
-  position: absolute;
-  bottom: calc(100% + 6px);
-  left: 0;
+  position: fixed;   /* fixed escapa el overflow del sidebar */
+  /* top / left se calculan dinámicamente en notifications.js */
   width: 320px;
   max-height: 420px;
   background: var(--card-bg, #101828);
