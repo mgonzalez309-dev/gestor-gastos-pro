@@ -48,8 +48,16 @@ const Notifications = (() => {
     bell.addEventListener('click', (e) => {
       e.stopPropagation();
       panelOpen = !panelOpen;
+      if (panelOpen) {
+        positionPanel(bell, panel);
+        loadPanel();
+      }
       panel.classList.toggle('hidden', !panelOpen);
-      if (panelOpen) loadPanel();
+    });
+
+    // Reposicionar si la ventana cambia de tamaño con el panel abierto
+    window.addEventListener('resize', () => {
+      if (panelOpen) positionPanel(bell, panel);
     });
 
     // Cerrar al hacer clic fuera
@@ -145,6 +153,31 @@ const Notifications = (() => {
     } catch {
       list.innerHTML = '<div class="notif-empty">Error cargando notificaciones.</div>';
     }
+  }
+
+  // ── Posicionamiento del panel (fixed, a la derecha del sidebar) ───
+  function positionPanel(bell, panel) {
+    const rect = bell.getBoundingClientRect();
+    const panelW = 320;
+    const margin = 8;
+    const vpW = window.innerWidth;
+    const vpH = window.innerHeight;
+
+    // Preferimos abrir a la derecha del sidebar
+    let left = rect.right + margin;
+    // Si no cabe a la derecha, abrimos a la izquierda
+    if (left + panelW > vpW - margin) {
+      left = rect.left - panelW - margin;
+    }
+
+    // Alineamos verticalmente con el centro del botón
+    let top = rect.top + rect.height / 2 - 200; // centrado aprox.
+    const maxTop = vpH - 420 - margin;
+    if (top < margin)    top = margin;
+    if (top > maxTop)    top = maxTop;
+
+    panel.style.left = `${left}px`;
+    panel.style.top  = `${top}px`;
   }
 
   // ── Browser Notifications (Web API) ──────────────────────────────
