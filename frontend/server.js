@@ -3,8 +3,11 @@ const path = require('path');
 
 const app = express();
 const rootDir = __dirname;
+const pagesDir = path.join(rootDir, 'pages');
 const port = Number(process.env.PORT || 3000);
 
+// Las URLs públicas no cambian: solo el archivo físico que las respalda
+// vive ahora en pages/ en lugar de la raíz del proyecto.
 const htmlRoutes = {
   '/': 'landing.html',
   '/landing': 'landing.html',
@@ -30,7 +33,7 @@ app.get('/js/runtime-config.js', (_req, res) => {
 // resolves to landing.html instead of Express auto-serving index.html.
 Object.entries(htmlRoutes).forEach(([route, file]) => {
   app.get(route, (_req, res) => {
-    res.sendFile(path.join(rootDir, file));
+    res.sendFile(path.join(pagesDir, file));
   });
 });
 
