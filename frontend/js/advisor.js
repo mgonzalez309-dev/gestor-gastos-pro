@@ -217,6 +217,8 @@ const Advisor = (() => {
       const data = await Api.get(`/expenses/patterns/${userId}`);
       const trends = data.trends || [];
 
+      renderPatternsSummary(data.dominantCategory, data.topDayOfWeek);
+
       if (!trends.length) {
         trendsList.innerHTML = '<div class="empty-state-sm">No hay suficientes datos para detectar tendencias.</div>';
         return;
@@ -235,6 +237,26 @@ const Advisor = (() => {
     } catch (err) {
       trendsList.innerHTML = '<div class="empty-state-sm">Error cargando tendencias.</div>';
     }
+  }
+
+  function renderPatternsSummary(dominantCategory, topDayOfWeek) {
+    const container = document.getElementById('patterns-summary');
+    if (!container) return;
+
+    if (!dominantCategory && !topDayOfWeek) {
+      container.innerHTML = '';
+      return;
+    }
+
+    const items = [];
+    if (dominantCategory) {
+      items.push(`<div class="pattern-summary-item"><span class="pattern-summary-label">Categoría dominante</span><span class="pattern-summary-value">${Api.categoryLabel(dominantCategory.category).replace(/^\S+\s/, '')} (${Api.formatCurrency(dominantCategory.total)})</span></div>`);
+    }
+    if (topDayOfWeek) {
+      items.push(`<div class="pattern-summary-item"><span class="pattern-summary-label">Día con más gasto</span><span class="pattern-summary-value">${topDayOfWeek.day} (${Api.formatCurrency(topDayOfWeek.total)})</span></div>`);
+    }
+
+    container.innerHTML = items.join('');
   }
 
   async function loadUserRecommendations(userId) {

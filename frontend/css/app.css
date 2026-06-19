@@ -2740,3 +2740,33 @@ body[data-theme='light'] .savings-goal-card {
   border-color: #e8f0fb;
 }
 body[data-theme='light'] .savings-goal-name { color: #1e2738; }
+
+/* ══════════════════════════════════════════════════════════════════
+   PATTERNS SUMMARY (dia con mas gasto / categoria dominante)
+══════════════════════════════════════════════════════════════════ */
+.patterns-summary {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  margin-bottom: 1rem;
+}
+
+.pattern-summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: .5rem .75rem;
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 8px;
+  font-size: .82rem;
+}
+
+.pattern-summary-label { color: var(--text-muted, #94a3b8); }
+.pattern-summary-value { font-weight: 600; color: var(--text-primary, #e2e8f0); }
+
+body[data-theme='light'] .pattern-summary-item {
+  background: #fff;
+  border-color: #e8f0fb;
+}
+body[data-theme='light'] .pattern-summary-value { color: #1e2738; }

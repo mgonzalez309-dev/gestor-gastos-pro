@@ -313,6 +313,10 @@ export class ExpensesService {
     };
   }
 
+  private readonly DAY_NAMES = [
+    'Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado',
+  ];
+
   async getPatterns(userId: string) {
     const threeMonthsAgo = new Date();
     threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
@@ -330,6 +334,28 @@ export class ExpensesService {
       monthCategoryMap[month][e.category] =
         (monthCategoryMap[month][e.category] || 0) + e.amount;
     }
+
+    // Día de la semana con mayor gasto acumulado (de los últimos 3 meses)
+    const dayOfWeekTotals: number[] = [0, 0, 0, 0, 0, 0, 0];
+    for (const e of expenses) {
+      dayOfWeekTotals[e.date.getDay()] += e.amount;
+    }
+    const topDayIndex = dayOfWeekTotals.reduce(
+      (maxIdx, val, idx, arr) => (val > arr[maxIdx] ? idx : maxIdx), 0,
+    );
+    const topDayOfWeek = dayOfWeekTotals.some((t) => t > 0)
+      ? { day: this.DAY_NAMES[topDayIndex], total: Math.round(dayOfWeekTotals[topDayIndex] * 100) / 100 }
+      : null;
+
+    // Categoría dominante en el período (mayor monto acumulado)
+    const categoryTotals: Record<string, number> = {};
+    for (const e of expenses) {
+      categoryTotals[e.category] = (categoryTotals[e.category] || 0) + e.amount;
+    }
+    const dominantCategoryEntry = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1])[0];
+    const dominantCategory = dominantCategoryEntry
+      ? { category: dominantCategoryEntry[0], total: Math.round(dominantCategoryEntry[1] * 100) / 100 }
+      : null;
 
     // Detect category trends (categories with increasing spend)
     const months = Object.keys(monthCategoryMap).sort();
@@ -362,6 +388,8 @@ export class ExpensesService {
         total: Object.values(monthCategoryMap[m]).reduce((a, b) => a + b, 0),
       })),
       trends: trends.sort((a, b) => b.change - a.change),
+      topDayOfWeek,
+      dominantCategory,
     };
   }
 
