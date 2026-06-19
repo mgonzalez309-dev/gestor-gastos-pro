@@ -8,6 +8,7 @@ import { ExpensesModule } from './expenses/expenses.module';
 import { TicketsModule } from './tickets/tickets.module';
 import { RecommendationsModule } from './recommendations/recommendations.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { SavingsGoalsModule } from './savings-goals/savings-goals.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     TicketsModule,
     RecommendationsModule,
     NotificationsModule,
+    SavingsGoalsModule,
   ],
   providers: [
     {
