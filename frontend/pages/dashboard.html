@@ -202,6 +202,43 @@
 
       </section>
 
+      <!-- Comparación entre meses -->
+      <section class="section">
+        <div class="section-header">
+          <h2 class="section-title">Comparar meses</h2>
+        </div>
+        <div class="compare-controls">
+          <div class="filter-group">
+            <label class="form-label" for="compare-month-a">Mes A</label>
+            <select id="compare-month-a" class="form-input form-input--sm"></select>
+          </div>
+          <div class="filter-group">
+            <label class="form-label" for="compare-month-b">Mes B</label>
+            <select id="compare-month-b" class="form-input form-input--sm"></select>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="btn-compare-months">Comparar</button>
+        </div>
+
+        <div id="compare-result" class="compare-result hidden">
+          <div class="compare-summary">
+            <div class="compare-summary-item">
+              <span class="compare-summary-label" id="compare-label-a">Mes A</span>
+              <span class="compare-summary-value" id="compare-total-a">-</span>
+            </div>
+            <div class="compare-summary-arrow">→</div>
+            <div class="compare-summary-item">
+              <span class="compare-summary-label" id="compare-label-b">Mes B</span>
+              <span class="compare-summary-value" id="compare-total-b">-</span>
+            </div>
+            <div class="compare-summary-diff" id="compare-total-diff">-</div>
+          </div>
+
+          <div id="compare-category-list" class="compare-category-list"></div>
+        </div>
+
+        <div id="compare-empty" class="empty-state-sm">Elegí dos meses y presioná "Comparar" para ver la diferencia.</div>
+      </section>
+
       <section class="section">
         <div class="section-header">
           <h2 class="section-title">Recomendaciones</h2>

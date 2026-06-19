@@ -364,4 +364,94 @@ export class ExpensesService {
       trends: trends.sort((a, b) => b.change - a.change),
     };
   }
+
+  // ─── Comparación entre meses ────────────────────────────────────────────
+
+  /**
+   * Compara el gasto total y por categoría entre dos meses (formato YYYY-MM).
+   * Por defecto compara el mes anterior contra el mes actual.
+   */
+  async compareMonths(userId: string, monthA?: string, monthB?: string) {
+    const now = new Date();
+    const defaultB = this.formatYearMonth(now);
+    const prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const defaultA = this.formatYearMonth(prevMonthDate);
+
+    const targetA = monthA || defaultA;
+    const targetB = monthB || defaultB;
+
+    const [dataA, dataB] = await Promise.all([
+      this.getMonthSummary(userId, targetA),
+      this.getMonthSummary(userId, targetB),
+    ]);
+
+    const totalDiff = dataB.total - dataA.total;
+    const totalDiffPct =
+      dataA.total > 0 ? (totalDiff / dataA.total) * 100 : (dataB.total > 0 ? 100 : 0);
+
+    const totalsByCategoryA = new Map(dataA.byCategory.map((c) => [c.category, c.total]));
+    const totalsByCategoryB = new Map(dataB.byCategory.map((c) => [c.category, c.total]));
+    const allCategories = new Set([...totalsByCategoryA.keys(), ...totalsByCategoryB.keys()]);
+
+    const byCategory = [...allCategories]
+      .map((category) => {
+        const totalA = totalsByCategoryA.get(category) || 0;
+        const totalB = totalsByCategoryB.get(category) || 0;
+        const diff = totalB - totalA;
+        const diffPct = totalA > 0 ? (diff / totalA) * 100 : (totalB > 0 ? 100 : 0);
+        return {
+          category,
+          totalA,
+          totalB,
+          diff: Math.round(diff * 100) / 100,
+          diffPct: Math.round(diffPct * 100) / 100,
+        };
+      })
+      .sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff));
+
+    return {
+      monthA: dataA,
+      monthB: dataB,
+      diff: {
+        total: Math.round(totalDiff * 100) / 100,
+        totalPct: Math.round(totalDiffPct * 100) / 100,
+        byCategory,
+      },
+    };
+  }
+
+  private formatYearMonth(date: Date): string {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+  }
+
+  private async getMonthSummary(userId: string, yearMonth: string) {
+    const [year, month] = yearMonth.split('-').map(Number);
+    const start = new Date(year, month - 1, 1);
+    const end = new Date(year, month, 1); // exclusivo: primer día del mes siguiente
+
+    const [byCategory, aggregate] = await Promise.all([
+      this.prisma.expense.groupBy({
+        by: ['category'],
+        where: { userId, date: { gte: start, lt: end } },
+        _sum: { amount: true },
+        _count: true,
+      }),
+      this.prisma.expense.aggregate({
+        where: { userId, date: { gte: start, lt: end } },
+        _sum: { amount: true },
+        _count: true,
+      }),
+    ]);
+
+    return {
+      month: yearMonth,
+      total: aggregate._sum.amount || 0,
+      count: aggregate._count,
+      byCategory: byCategory.map((c) => ({
+        category: c.category,
+        total: c._sum.amount || 0,
+        count: c._count,
+      })),
+    };
+  }
 }

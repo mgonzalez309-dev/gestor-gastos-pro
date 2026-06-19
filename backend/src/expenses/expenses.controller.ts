@@ -106,6 +106,31 @@ export class ExpensesController {
     return this.expensesService.getPatterns(userId);
   }
 
+  @Get('compare')
+  @ApiOperation({ summary: 'Comparar dos meses de gasto del usuario autenticado' })
+  @ApiQuery({ name: 'monthA', required: false, description: 'YYYY-MM, default: mes anterior' })
+  @ApiQuery({ name: 'monthB', required: false, description: 'YYYY-MM, default: mes actual' })
+  compareMyMonths(
+    @Request() req,
+    @Query('monthA') monthA?: string,
+    @Query('monthB') monthB?: string,
+  ) {
+    return this.expensesService.compareMonths(req.user.id, monthA, monthB);
+  }
+
+  @Get('compare/:userId')
+  @Roles(Role.ADVISOR)
+  @ApiOperation({ summary: 'Comparar dos meses de gasto de un usuario (ADVISOR)' })
+  @ApiQuery({ name: 'monthA', required: false, description: 'YYYY-MM, default: mes anterior' })
+  @ApiQuery({ name: 'monthB', required: false, description: 'YYYY-MM, default: mes actual' })
+  compareUserMonths(
+    @Param('userId') userId: string,
+    @Query('monthA') monthA?: string,
+    @Query('monthB') monthB?: string,
+  ) {
+    return this.expensesService.compareMonths(userId, monthA, monthB);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Obtener gasto por ID' })
   findOne(@Param('id') id: string, @Request() req) {

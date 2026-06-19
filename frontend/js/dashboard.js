@@ -30,6 +30,7 @@ const Dashboard = (() => {
     if (greetEl) greetEl.textContent = `${greeting}, ${user?.name?.split(' ')[0] || ''}!`;
 
     bindCategoryPeriodFilter();
+    initMonthComparison();
 
     await Promise.all([
       loadAnalytics(),
@@ -760,6 +761,99 @@ const Dashboard = (() => {
     }).join('');
 
     if (window.lucide) lucide.createIcons({ node: container });
+  }
+
+  // ── Comparación entre meses ───────────────────────────────────────
+  function initMonthComparison() {
+    const selectA = document.getElementById('compare-month-a');
+    const selectB = document.getElementById('compare-month-b');
+    const btn = document.getElementById('btn-compare-months');
+    if (!selectA || !selectB || !btn) return;
+
+    // Poblar los últimos 12 meses (más reciente primero)
+    const now = new Date();
+    const options = [];
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const label = d.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+      options.push({ value, label });
+    }
+
+    const optionsHtml = options.map((o) => `<option value="${o.value}">${o.label}</option>`).join('');
+    selectA.innerHTML = optionsHtml;
+    selectB.innerHTML = optionsHtml;
+
+    // Default: mes anterior (A) vs mes actual (B) — igual que el backend
+    selectA.value = options[1]?.value || options[0].value;
+    selectB.value = options[0].value;
+
+    btn.addEventListener('click', loadMonthComparison);
+  }
+
+  async function loadMonthComparison() {
+    const monthA = document.getElementById('compare-month-a')?.value;
+    const monthB = document.getElementById('compare-month-b')?.value;
+    if (!monthA || !monthB) return;
+
+    const btn = document.getElementById('btn-compare-months');
+    const resultEl = document.getElementById('compare-result');
+    const emptyEl = document.getElementById('compare-empty');
+
+    btn.disabled = true;
+    btn.textContent = 'Comparando...';
+
+    try {
+      const data = await Api.get(`/expenses/compare?monthA=${monthA}&monthB=${monthB}`);
+      renderMonthComparison(data);
+      resultEl?.classList.remove('hidden');
+      emptyEl?.classList.add('hidden');
+    } catch (err) {
+      console.error('Error comparando meses:', err);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Comparar';
+    }
+  }
+
+  function renderMonthComparison(data) {
+    const labelFor = (yyyymm) => {
+      const [y, m] = yyyymm.split('-');
+      return new Date(y, m - 1).toLocaleDateString('es-AR', { month: 'short', year: 'numeric' });
+    };
+
+    const setText = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+
+    setText('compare-label-a', labelFor(data.monthA.month));
+    setText('compare-label-b', labelFor(data.monthB.month));
+    setText('compare-total-a', Api.formatCurrency(data.monthA.total));
+    setText('compare-total-b', Api.formatCurrency(data.monthB.total));
+
+    const diffEl = document.getElementById('compare-total-diff');
+    if (diffEl) {
+      const sign = data.diff.total > 0 ? '+' : '';
+      diffEl.textContent = `${sign}${Api.formatCurrency(data.diff.total)} (${sign}${data.diff.totalPct.toFixed(1)}%)`;
+      diffEl.className = `compare-summary-diff ${data.diff.total > 0 ? 'compare-diff--up' : data.diff.total < 0 ? 'compare-diff--down' : ''}`;
+    }
+
+    const listEl = document.getElementById('compare-category-list');
+    if (!listEl) return;
+
+    if (!data.diff.byCategory.length) {
+      listEl.innerHTML = '<div class="empty-state-sm">Sin gastos en ninguno de los dos meses.</div>';
+      return;
+    }
+
+    listEl.innerHTML = data.diff.byCategory.map((c) => {
+      const sign = c.diff > 0 ? '+' : '';
+      const cls = c.diff > 0 ? 'compare-diff--up' : c.diff < 0 ? 'compare-diff--down' : '';
+      return `
+        <div class="compare-category-row">
+          <span class="compare-category-name">${Api.categoryLabel(c.category)}</span>
+          <span class="compare-category-amounts">${Api.formatCurrency(c.totalA)} → ${Api.formatCurrency(c.totalB)}</span>
+          <span class="compare-category-diff ${cls}">${sign}${Api.formatCurrency(c.diff)} (${sign}${c.diffPct.toFixed(1)}%)</span>
+        </div>`;
+    }).join('');
   }
 
   return { init };
