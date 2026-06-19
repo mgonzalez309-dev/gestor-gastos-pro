@@ -97,7 +97,7 @@ const Api = (() => {
       const isAuthPage = p.endsWith('index.html') || p.endsWith('register.html') ||
                          p === '/login' || p === '/register' || p === '/';
       if (!isAuthPage) {
-        window.location.href = 'index.html';
+        window.location.href = '/login';
       }
       throw new Error('Sesión expirada. Por favor iniciá sesión nuevamente.');
     }

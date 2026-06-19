@@ -71,7 +71,7 @@ const Auth = (() => {
     // Click on user info → navigate to profile page
     const userInfoEl = document.getElementById('sidebar-user');
     if (userInfoEl) {
-      userInfoEl.addEventListener('click', () => { window.location.href = 'profile.html'; });
+      userInfoEl.addEventListener('click', () => { window.location.href = '/profile'; });
     }
 
     // Budget widget in sidebar footer (if monthlyIncome is set)
@@ -300,12 +300,12 @@ const Auth = (() => {
     const user  = Api.getUser();
 
     if (!token || !user) {
-      window.location.href = 'index.html';
+      window.location.href = '/login';
       return;
     }
 
     if (requiredRole && user.role !== requiredRole) {
-      window.location.href = 'dashboard.html';
+      window.location.href = '/dashboard';
       return;
     }
 
@@ -315,14 +315,14 @@ const Auth = (() => {
   // ── Redirect if already logged in ────────────────────────────────
   function redirectIfLoggedIn() {
     if (Api.getToken() && Api.getUser()) {
-      window.location.href = 'dashboard.html';
+      window.location.href = '/dashboard';
     }
   }
 
   // ── Logout ───────────────────────────────────────────────────────
   function logout() {
     Api.clearToken();
-    window.location.href = 'index.html';
+    window.location.href = '/login';
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -367,7 +367,7 @@ const Auth = (() => {
         const res = await Api.post('/auth/login', { email, password });
         Api.saveToken(res.access_token);
         Api.saveUser(res.user);
-        window.location.href = 'dashboard.html';
+        window.location.href = '/dashboard';
       } catch (err) {
         const isNotFound = err.message?.toLowerCase().includes('no encontramos');
         if (isNotFound) {
@@ -434,7 +434,7 @@ const Auth = (() => {
         const res = await Api.post('/auth/register', { name, email, password });
         Api.saveToken(res.access_token);
         Api.saveUser(res.user);
-        window.location.href = 'dashboard.html';
+        window.location.href = '/dashboard';
       } catch (err) {
         const isDuplicate = err.message?.toLowerCase().includes('ya existe') ||
                             err.message?.toLowerCase().includes('conflict') ||

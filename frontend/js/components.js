@@ -3,7 +3,7 @@ const UIComponents = (() => {
     const slot = document.getElementById(slotId);
     if (!slot) return;
 
-    const res = await fetch('components/sidebar.html', { cache: 'default' });
+    const res = await fetch('/components/sidebar.html', { cache: 'default' });
     const html = await res.text();
     slot.innerHTML = html;
 

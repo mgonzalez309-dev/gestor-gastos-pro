@@ -1146,7 +1146,7 @@ const Expenses = (() => {
   async function ensurePdfFont(doc) {
     try {
       if (!cachedManropeBase64) {
-        const response = await fetch('assets/fonts/Manrope-Variable.ttf');
+        const response = await fetch('/assets/fonts/Manrope-Variable.ttf');
         if (!response.ok) throw new Error('Font not found');
         const buffer = await response.arrayBuffer();
         cachedManropeBase64 = arrayBufferToBase64(buffer);
@@ -1172,7 +1172,7 @@ const Expenses = (() => {
 
   async function loadLogoDataUrl() {
     try {
-      const response = await fetch('assets/logo.png');
+      const response = await fetch('/assets/logo.png');
       if (!response.ok) return null;
       const blob = await response.blob();
       return await blobToDataURL(blob);

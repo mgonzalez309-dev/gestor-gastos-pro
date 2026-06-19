@@ -27,7 +27,7 @@ const Tickets = (() => {
     });
 
     document.getElementById('btn-crear-gasto-manual')?.addEventListener('click', () => {
-      window.location.href = 'expenses.html?new=1';
+      window.location.href = '/expenses?new=1';
     });
   }
 
@@ -299,7 +299,7 @@ const Tickets = (() => {
       });
 
       Api.showAlert(alertEl, 'Gasto registrado correctamente.', 'success');
-      setTimeout(() => { window.location.href = 'expenses.html'; }, 1500);
+      setTimeout(() => { window.location.href = '/expenses'; }, 1500);
     } catch (err) {
       Api.showAlert(alertEl, err.message, 'error');
     } finally {
