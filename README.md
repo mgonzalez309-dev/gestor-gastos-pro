@@ -112,12 +112,13 @@ Adicionalmente, registra rutas con nombre (`/dashboard`, `/expenses`, etc.) **an
 
 ## Modelo de datos
 
-5 entidades relacionadas, todas con `userId` como FK hacia `User`:
+6 entidades relacionadas, todas con `userId` como FK hacia `User`:
 
 ```
 User 1───* Expense       (gastos del usuario)
 User 1───* Ticket         (tickets escaneados)
 User 1───* Notification   (alertas automáticas)
+User 1───* SavingsGoal     (metas de ahorro con objetivo y plazo)
 User 1───* Recommendation (recibidas: userId)  ──┐
 User 1───* Recommendation (emitidas: advisorId) ─┘ (un ADVISOR puede emitir; nullable si es autogenerada)
 Ticket 1───* Expense      (opcional: un gasto puede originarse de un ticket)
@@ -125,11 +126,12 @@ Ticket 1───* Expense      (opcional: un gasto puede originarse de un ticke
 
 | Entidad | Campos clave | Notas |
 |---------|--------------|-------|
-| **User** | `email`, `password` (bcrypt), `role` (USER\|ADVISOR), `currency`, `monthlyIncome`, `savingsGoal`, `categoryBudgets` (JSON), `avatarUrl` | `categoryBudgets` guarda `{"FOOD": 5000, "TRANSPORT": 2000, ...}` |
+| **User** | `email`, `password` (bcrypt), `role` (USER\|ADVISOR), `currency`, `monthlyIncome`, `savingsGoal`, `categoryBudgets` (JSON), `avatarUrl` | `categoryBudgets` guarda `{"FOOD": 5000, "TRANSPORT": 2000, ...}`. `savingsGoal` es un monto simple mensual — distinto de `SavingsGoal` (entidad), que es una meta con objetivo y plazo |
 | **Expense** | `merchant`, `amount`, `category` (enum 10 valores), `date`, `description`, `tags` (array de texto), `ticketId?` | Categorías: FOOD, TRANSPORT, ENTERTAINMENT, HEALTH, EDUCATION, CLOTHING, TECHNOLOGY, HOME, SERVICES, OTHER |
 | **Ticket** | `imageUrl`, `extractedText`, `parsedAmount`, `parsedMerchant`, `parsedDate`, `parsedTax`, `parsedItems` (JSON) | Los campos `parsed*` quedan `null` hasta que el OCR+IA terminan de procesar (asíncrono) |
 | **Recommendation** | `message`, `type` (GENERAL\|ALERT\|SAVING\|PATTERN), `advisorId?` | `advisorId` nulo = autogenerada por el sistema, no por un asesor humano |
 | **Notification** | `type` (MONTHLY_GROWTH\|UNUSUAL_EXPENSE\|SAVINGS_RISK\|BUDGET_ALERT\|GENERAL), `title`, `message`, `isRead`, `metadata` (JSON) | Generadas on-demand al cargar el dashboard, con cooldown de 24h por tipo (no hay scheduler/cron) |
+| **SavingsGoal** | `name`, `targetAmount`, `currentAmount` (default 0), `targetDate?` | Ej: "Vacaciones — $1.000.000 antes del 31/12". `progressPct`, `remaining`, `isCompleted` y `daysLeft` se calculan en el servicio, no se persisten |
 
 ---
 
@@ -217,6 +219,7 @@ UPDATE users SET role = 'ADVISOR' WHERE email = 'asesor@empresa.com';
 | PUT | `/api/users/:id` | Actualizar perfil | Propio / ADVISOR |
 | GET | `/api/users/:id/budgets` | Presupuestos por categoría | Propio / ADVISOR |
 | PUT | `/api/users/:id/budgets` | Guardar presupuestos por categoría | Propio / ADVISOR |
+| DELETE | `/api/users/:id/budgets/:category` | Eliminar el presupuesto de una categoría puntual | Propio / ADVISOR |
 | GET | `/api/expenses` | Lista gastos (paginada, filtros: comercio/categoría/etiqueta/fecha/monto) | USER / ADVISOR |
 | POST | `/api/expenses` | Crear gasto | USER |
 | GET | `/api/expenses/:id` | Detalle de gasto | Dueño / ADVISOR |
@@ -244,6 +247,12 @@ UPDATE users SET role = 'ADVISOR' WHERE email = 'asesor@empresa.com';
 | PUT | `/api/notifications/read-all` | Marcar todas como leídas | USER / ADVISOR |
 | DELETE | `/api/notifications/:id` | Eliminar una notificación | USER / ADVISOR |
 | DELETE | `/api/notifications/clear-all` | Eliminar todas | USER / ADVISOR |
+| POST | `/api/savings-goals` | Crear meta de ahorro (nombre, monto objetivo, fecha límite opcional) | USER |
+| GET | `/api/savings-goals` | Listar metas propias (con progreso calculado) | USER |
+| GET | `/api/savings-goals/:id` | Detalle de una meta | Dueño |
+| PUT | `/api/savings-goals/:id` | Editar nombre/monto/fecha | Dueño |
+| POST | `/api/savings-goals/:id/contribute` | Sumar un aporte al ahorro acumulado | Dueño |
+| DELETE | `/api/savings-goals/:id` | Eliminar una meta | Dueño |
 
 Documentación interactiva completa (probar requests en vivo): `http://localhost:4500/docs`
 
@@ -349,8 +358,8 @@ npm run test:e2e    # e2e contra la app real (Supertest)
 npm run test:cov    # con reporte de cobertura
 ```
 
-- **Unit**: `expenses.service.spec.ts` cubre el cálculo de analíticas, el umbral de detección de gastos anómalos (5x el promedio) y la clasificación del perfil financiero.
-- **E2E**: `auth.e2e-spec.ts` cubre registro, login, credenciales inválidas, y protección de rutas por JWT/rol. No hay base de datos de test separada — el usuario de prueba se crea con un email único por corrida y se borra automáticamente al finalizar.
+- **Unit** (19 tests): `expenses.service.spec.ts` cubre el cálculo de analíticas, el umbral de detección de gastos anómalos (5x el promedio) y la clasificación del perfil financiero. `savings-goals.service.spec.ts` cubre el CRUD completo, el cálculo de progreso (incluyendo el cap en 100% cuando un aporte supera el objetivo) y el control de ownership entre usuarios.
+- **E2E** (7 tests): `auth.e2e-spec.ts` cubre registro, login, credenciales inválidas, y protección de rutas por JWT/rol. No hay base de datos de test separada — el usuario de prueba se crea con un email único por corrida y se borra automáticamente al finalizar.
 
 ---
 
