@@ -128,15 +128,19 @@ export class UsersService {
     return { budgets: (user.categoryBudgets as Record<string, number>) || {} };
   }
 
+  private readonly VALID_CATEGORIES = [
+    'FOOD', 'TRANSPORT', 'ENTERTAINMENT', 'HEALTH', 'EDUCATION',
+    'CLOTHING', 'TECHNOLOGY', 'HOME', 'SERVICES', 'OTHER',
+  ];
+
   async updateBudgets(userId: string, budgets: Record<string, number>) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException(`Usuario "${userId}" no encontrado.`);
 
     // Validate: only positive numbers for known categories
-    const VALID_CATEGORIES = ['FOOD','TRANSPORT','ENTERTAINMENT','HEALTH','EDUCATION','CLOTHING','TECHNOLOGY','HOME','SERVICES','OTHER'];
     const clean: Record<string, number> = {};
     for (const [cat, amount] of Object.entries(budgets)) {
-      if (VALID_CATEGORIES.includes(cat) && typeof amount === 'number' && amount >= 0) {
+      if (this.VALID_CATEGORIES.includes(cat) && typeof amount === 'number' && amount >= 0) {
         clean[cat] = amount;
       }
     }
@@ -144,6 +148,28 @@ export class UsersService {
     return this.prisma.user.update({
       where: { id: userId },
       data: { categoryBudgets: clean },
+      select: { id: true, categoryBudgets: true },
+    });
+  }
+
+  /** Elimina el presupuesto de una categoría específica (no solo lo pone en 0). */
+  async removeBudget(userId: string, category: string) {
+    if (!this.VALID_CATEGORIES.includes(category)) {
+      throw new NotFoundException(`Categoría "${category}" no es válida.`);
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { categoryBudgets: true },
+    });
+    if (!user) throw new NotFoundException(`Usuario "${userId}" no encontrado.`);
+
+    const current = (user.categoryBudgets as Record<string, number>) || {};
+    const { [category]: _removed, ...rest } = current;
+
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { categoryBudgets: rest },
       select: { id: true, categoryBudgets: true },
     });
   }

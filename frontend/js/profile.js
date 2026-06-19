@@ -478,7 +478,9 @@ const Profile = (() => {
       existing = res.budgets || {};
     } catch { /* first time — use empty */ }
 
-    container.innerHTML = CATEGORIES.map((cat) => `
+    container.innerHTML = CATEGORIES.map((cat) => {
+      const hasLimit = existing[cat.key] > 0;
+      return `
       <div class="budget-category-row">
         <label class="budget-category-label" for="budget-${cat.key}">${cat.label}</label>
         <div class="budget-category-input-wrap">
@@ -493,8 +495,35 @@ const Profile = (() => {
             value="${existing[cat.key] || ''}"
           />
           <span class="budget-currency-badge">${Api.getUser()?.currency || 'ARS'}</span>
+          <button
+            type="button"
+            class="budget-category-remove ${hasLimit ? '' : 'hidden'}"
+            data-category="${cat.key}"
+            title="Eliminar presupuesto de ${cat.label}"
+            aria-label="Eliminar presupuesto de ${cat.label}"
+          >×</button>
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
+
+    container.querySelectorAll('.budget-category-remove').forEach((btn) => {
+      btn.addEventListener('click', () => removeCategoryBudget(btn.dataset.category));
+    });
+  }
+
+  async function removeCategoryBudget(category) {
+    const user = Api.getUser();
+    if (!user) return;
+
+    try {
+      await Api.del(`/users/${user.id}/budgets/${category}`);
+      document.getElementById(`budget-${category}`).value = '';
+      const btn = document.querySelector(`.budget-category-remove[data-category="${category}"]`);
+      btn?.classList.add('hidden');
+      Api.showAlert('profile-page-alert', 'Presupuesto eliminado.', 'success');
+    } catch (err) {
+      Api.showAlert('profile-page-alert', err.message, 'error');
+    }
   }
 
   async function saveCategoryBudgets() {
@@ -517,6 +546,7 @@ const Profile = (() => {
 
     try {
       await Api.put(`/users/${user.id}/budgets`, { budgets });
+      await loadCategoryBudgets(user.id); // refresca para mostrar/ocultar botones de eliminar
       Api.showAlert('profile-page-alert', 'Presupuestos guardados correctamente.', 'success');
     } catch (err) {
       Api.showAlert('profile-page-alert', err.message, 'error');

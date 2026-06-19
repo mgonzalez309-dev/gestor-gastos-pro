@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Put,
+  Delete,
   Body,
   Param,
   UseGuards,
@@ -86,5 +87,18 @@ export class UsersController {
       throw new ForbiddenException('Solo podés editar tus propios presupuestos.');
     }
     return this.usersService.updateBudgets(id, dto.budgets);
+  }
+
+  @Delete(':id/budgets/:category')
+  @ApiOperation({ summary: 'Eliminar el presupuesto de una categoría específica' })
+  removeBudget(
+    @Param('id') id: string,
+    @Param('category') category: string,
+    @Request() req,
+  ) {
+    if (req.user.role !== Role.ADVISOR && req.user.id !== id) {
+      throw new ForbiddenException('Solo podés editar tus propios presupuestos.');
+    }
+    return this.usersService.removeBudget(id, category);
   }
 }
