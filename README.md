@@ -57,6 +57,41 @@ Proyecto Ingenieria Web II/
 
 ---
 
+## Decisiones de arquitectura
+
+### ¿Por qué el frontend levanta un servidor Express?
+
+El frontend es HTML/CSS/JS estático — no hay build step ni framework — pero **igual** corre detrás de un pequeño servidor Express (`frontend/server.js`). Esto no es accidental ni redundante: resuelve dos problemas concretos.
+
+**1. Railway necesita un proceso vivo, no un directorio de archivos.**
+La plataforma de despliegue elegida (Railway) factura y monitorea servicios en base a un *proceso* corriendo, no a un hosting de archivos estáticos puro. Sin un servidor propio, desplegar el frontend como "solo archivos" no es una opción directa en Railway sin contratar/configurar un servicio de static-site aparte.
+
+**2. Una sola build sirve para todos los entornos.**
+El backend puede vivir en `http://localhost:4500` en desarrollo y en `https://gastos-backend.up.railway.app` en producción. En vez de hardcodear esa URL en el JavaScript (lo que obligaría a tener un build distinto por entorno), `server.js` expone un endpoint propio:
+
+```js
+app.get('/js/runtime-config.js', (_req, res) => {
+  const apiBaseUrl = (process.env.API_BASE_URL || '').trim();
+  res.send(`window.__GASTOSAPP_CONFIG__ = { apiBaseUrl: ${JSON.stringify(apiBaseUrl)} };`);
+});
+```
+
+El navegador carga `runtime-config.js` como cualquier script, pero su contenido se genera en el momento según la variable de entorno del servidor. El mismo código fuente funciona en local y en producción sin tocar una línea.
+
+Adicionalmente, registra rutas con nombre (`/dashboard`, `/expenses`, etc.) **antes** del middleware estático, para servir `landing.html` en `/` en lugar de que Express auto-sirva `index.html` (que es la página de login, no la landing).
+
+**Trade-offs honestos — esto no es gratis:**
+
+| Ventaja | Costo |
+|---------|-------|
+| Mismo build para todos los entornos (config en runtime) | Un proceso de más corriendo para contenido 100% estático |
+| Despliegue simétrico al backend (mismo patrón en Railway) | Sin compresión gzip, cache-control headers ni CDN — un hosting estático real (Vercel, Netlify, Cloudflare Pages) lo hace mejor de fábrica |
+| Cero configuración adicional de infraestructura | El problema de "URL por entorno" también se resuelve con variables de entorno inyectadas en build-time en esos hostings, sin necesitar servidor propio |
+
+**Conclusión:** es una decisión válida y deliberada para el contexto de este proyecto (deploy simple en Railway, sin pipeline de CI/CD), no una sobre-ingeniería accidental. Si el proyecto creciera o necesitara mejor rendimiento de entrega estática, migrar a un hosting estático con variables de entorno en build-time sería el siguiente paso natural — quedó documentado como mejora futura.
+
+---
+
 ## Configuración local
 
 ### Requisitos previos
