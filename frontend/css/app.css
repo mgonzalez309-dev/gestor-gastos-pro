@@ -2661,3 +2661,82 @@ body[data-theme='light'] .compare-category-row {
   background: #fff;
   border-color: #e8f0fb;
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   SAVINGS GOALS (metas de ahorro con objetivo + plazo)
+══════════════════════════════════════════════════════════════════ */
+.savings-goal-card {
+  padding: .9rem 1rem;
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 10px;
+  margin-bottom: .75rem;
+}
+.savings-goal-card--done {
+  border-color: rgba(19,165,139,.4);
+  background: rgba(19,165,139,.06);
+}
+
+.savings-goal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: .4rem;
+}
+
+.savings-goal-name {
+  font-weight: 600;
+  color: var(--text-primary, #e2e8f0);
+}
+
+.savings-goal-pct {
+  font-size: .85rem;
+  font-weight: 700;
+  color: var(--color-primary, #0f6fff);
+}
+
+.savings-goal-bar-track {
+  height: 8px;
+  border-radius: 99px;
+  background: rgba(255,255,255,.08);
+  overflow: hidden;
+  margin-bottom: .5rem;
+}
+
+.savings-goal-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #0f6fff, #13a58b);
+  transition: width .3s ease;
+}
+
+.savings-goal-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: .78rem;
+  color: var(--text-muted, #94a3b8);
+  margin-bottom: .5rem;
+  flex-wrap: wrap;
+  gap: .3rem;
+}
+
+.savings-goal-badge-done {
+  font-size: .78rem;
+  font-weight: 600;
+  color: #34d399;
+  margin-bottom: .5rem;
+}
+
+.savings-goal-actions {
+  display: flex;
+  gap: .4rem;
+  flex-wrap: wrap;
+}
+
+.savings-goal-delete { color: var(--color-danger, #dc3f4e) !important; }
+
+body[data-theme='light'] .savings-goal-card {
+  background: #fff;
+  border-color: #e8f0fb;
+}
+body[data-theme='light'] .savings-goal-name { color: #1e2738; }

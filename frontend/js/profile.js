@@ -28,6 +28,7 @@ const Profile = (() => {
       loadBudgetSummary(),
       loadCategoryBudgets(user.id),
       loadFinancialProfile(),
+      loadSavingsGoals(),
     ]);
     bindEvents();
   }
@@ -604,6 +605,188 @@ const Profile = (() => {
     });
 
     bindAvatarInput();
+    bindSavingsGoalEvents();
+  }
+
+  // ── Metas de ahorro (objetivo + plazo) ────────────────────────────
+  let editingGoalId = null;
+
+  async function loadSavingsGoals() {
+    const container = document.getElementById('savings-goals-list');
+    if (!container) return;
+
+    try {
+      const goals = await Api.get('/savings-goals');
+      renderSavingsGoals(goals);
+    } catch (err) {
+      container.innerHTML = `<div class="empty-state-sm">Error cargando metas: ${Api.escapeHtml(err.message)}</div>`;
+    }
+  }
+
+  function renderSavingsGoals(goals) {
+    const container = document.getElementById('savings-goals-list');
+    if (!container) return;
+
+    if (!goals.length) {
+      container.innerHTML = '<div class="empty-state-sm">Todavía no creaste ninguna meta de ahorro.</div>';
+      return;
+    }
+
+    container.innerHTML = goals.map((g) => {
+      const pct = g.progressPct ?? 0;
+      const dateLabel = g.targetDate ? Api.formatDate(g.targetDate) : null;
+      const daysLabel = g.targetDate
+        ? (g.daysLeft >= 0 ? `${g.daysLeft} día${g.daysLeft === 1 ? '' : 's'} restantes` : 'Fecha límite vencida')
+        : null;
+
+      return `
+        <div class="savings-goal-card ${g.isCompleted ? 'savings-goal-card--done' : ''}" data-id="${g.id}">
+          <div class="savings-goal-header">
+            <span class="savings-goal-name">${Api.escapeHtml(g.name)}</span>
+            <span class="savings-goal-pct">${pct}%</span>
+          </div>
+          <div class="savings-goal-bar-track">
+            <div class="savings-goal-bar-fill" style="width:${pct}%"></div>
+          </div>
+          <div class="savings-goal-meta">
+            <span>${Api.formatCurrency(g.currentAmount)} de ${Api.formatCurrency(g.targetAmount)}</span>
+            ${dateLabel ? `<span>${dateLabel}${daysLabel ? ` · ${daysLabel}` : ''}</span>` : ''}
+          </div>
+          ${g.isCompleted ? '<div class="savings-goal-badge-done">✓ Meta alcanzada</div>' : ''}
+          <div class="savings-goal-actions">
+            <button type="button" class="btn btn-ghost btn-sm" data-action="contribute" data-id="${g.id}">Aportar</button>
+            <button type="button" class="btn btn-ghost btn-sm" data-action="edit" data-id="${g.id}">Editar</button>
+            <button type="button" class="btn btn-ghost btn-sm savings-goal-delete" data-action="delete" data-id="${g.id}">Eliminar</button>
+          </div>
+        </div>`;
+    }).join('');
+
+    container.querySelectorAll('[data-action="contribute"]').forEach((btn) => {
+      btn.addEventListener('click', () => openContributeModal(btn.dataset.id));
+    });
+    container.querySelectorAll('[data-action="edit"]').forEach((btn) => {
+      const goal = goals.find((g) => g.id === btn.dataset.id);
+      btn.addEventListener('click', () => openGoalModal(goal));
+    });
+    container.querySelectorAll('[data-action="delete"]').forEach((btn) => {
+      btn.addEventListener('click', () => deleteSavingsGoal(btn.dataset.id));
+    });
+  }
+
+  function bindSavingsGoalEvents() {
+    document.getElementById('btn-new-savings-goal')?.addEventListener('click', () => openGoalModal(null));
+    document.getElementById('savings-goal-modal-close')?.addEventListener('click', closeGoalModal);
+    document.getElementById('savings-goal-cancel-btn')?.addEventListener('click', closeGoalModal);
+    document.getElementById('savings-goal-modal')?.querySelector('.modal-backdrop')
+      ?.addEventListener('click', closeGoalModal);
+    document.getElementById('savings-goal-save-btn')?.addEventListener('click', saveSavingsGoal);
+
+    document.getElementById('contribute-modal-close')?.addEventListener('click', closeContributeModal);
+    document.getElementById('contribute-cancel-btn')?.addEventListener('click', closeContributeModal);
+    document.getElementById('contribute-modal')?.querySelector('.modal-backdrop')
+      ?.addEventListener('click', closeContributeModal);
+    document.getElementById('contribute-save-btn')?.addEventListener('click', saveContribution);
+  }
+
+  function openGoalModal(goal) {
+    editingGoalId = goal?.id || null;
+    Api.hideAlert('savings-goal-form-alert');
+    document.getElementById('savings-goal-modal-title').textContent = goal ? 'Editar meta' : 'Nueva meta de ahorro';
+    document.getElementById('sg-id').value = goal?.id || '';
+    document.getElementById('sg-name').value = goal?.name || '';
+    document.getElementById('sg-target-amount').value = goal?.targetAmount ?? '';
+    document.getElementById('sg-target-date').value = goal?.targetDate ? goal.targetDate.split('T')[0] : '';
+    document.getElementById('savings-goal-modal').classList.remove('hidden');
+  }
+
+  function closeGoalModal() {
+    document.getElementById('savings-goal-modal').classList.add('hidden');
+    editingGoalId = null;
+  }
+
+  async function saveSavingsGoal() {
+    const alertEl = 'savings-goal-form-alert';
+    Api.hideAlert(alertEl);
+
+    const name = document.getElementById('sg-name').value.trim();
+    const targetAmount = parseFloat(document.getElementById('sg-target-amount').value);
+    const targetDate = document.getElementById('sg-target-date').value || undefined;
+
+    if (!name) return Api.showAlert(alertEl, 'El nombre es obligatorio.', 'error');
+    if (!targetAmount || targetAmount <= 0) return Api.showAlert(alertEl, 'El monto objetivo debe ser mayor a cero.', 'error');
+
+    const btn = document.getElementById('savings-goal-save-btn');
+    btn.disabled = true;
+    btn.textContent = 'Guardando...';
+
+    try {
+      if (editingGoalId) {
+        await Api.put(`/savings-goals/${editingGoalId}`, { name, targetAmount, targetDate });
+      } else {
+        await Api.post('/savings-goals', { name, targetAmount, targetDate });
+      }
+      closeGoalModal();
+      await loadSavingsGoals();
+      Api.showAlert('profile-page-alert', `Meta ${editingGoalId ? 'actualizada' : 'creada'} correctamente.`, 'success');
+    } catch (err) {
+      Api.showAlert(alertEl, err.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Guardar';
+    }
+  }
+
+  async function deleteSavingsGoal(id) {
+    if (!confirm('¿Eliminar esta meta de ahorro? Esta acción no se puede deshacer.')) return;
+
+    try {
+      await Api.del(`/savings-goals/${id}`);
+      await loadSavingsGoals();
+      Api.showAlert('profile-page-alert', 'Meta eliminada.', 'success');
+    } catch (err) {
+      Api.showAlert('profile-page-alert', err.message, 'error');
+    }
+  }
+
+  function openContributeModal(id) {
+    Api.hideAlert('contribute-form-alert');
+    document.getElementById('contribute-goal-id').value = id;
+    document.getElementById('contribute-amount').value = '';
+    document.getElementById('contribute-modal').classList.remove('hidden');
+  }
+
+  function closeContributeModal() {
+    document.getElementById('contribute-modal').classList.add('hidden');
+  }
+
+  async function saveContribution() {
+    const alertEl = 'contribute-form-alert';
+    Api.hideAlert(alertEl);
+
+    const id = document.getElementById('contribute-goal-id').value;
+    const amount = parseFloat(document.getElementById('contribute-amount').value);
+
+    if (!amount || amount <= 0) return Api.showAlert(alertEl, 'El monto debe ser mayor a cero.', 'error');
+
+    const btn = document.getElementById('contribute-save-btn');
+    btn.disabled = true;
+    btn.textContent = 'Aportando...';
+
+    try {
+      const updated = await Api.post(`/savings-goals/${id}/contribute`, { amount });
+      closeContributeModal();
+      await loadSavingsGoals();
+      Api.showAlert(
+        'profile-page-alert',
+        updated.isCompleted ? '🎉 ¡Felicitaciones, alcanzaste tu meta!' : 'Aporte registrado correctamente.',
+        'success',
+      );
+    } catch (err) {
+      Api.showAlert(alertEl, err.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Aportar';
+    }
   }
 
   return { init };
