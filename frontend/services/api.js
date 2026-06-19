@@ -1,6 +1,10 @@
 /**
- * api.js – Módulo base para comunicación con la API REST
- * Todos los módulos de la app lo usan para realizar peticiones HTTP.
+ * services/api.js – Cliente HTTP puro: resolución de base URL, headers,
+ * manejo de sesión (token/usuario) y los verbos REST (get/post/put/del/upload).
+ *
+ * No contiene formateo ni utilidades de DOM (ver utils/format.js y utils/dom.js).
+ * Requiere que utils/dom.js y utils/format.js se carguen ANTES que este archivo,
+ * porque al final compone window.Api como fachada de compatibilidad hacia atrás.
  */
 
 function normalizeApiBaseUrl(url) {
@@ -33,7 +37,7 @@ function resolveApiBaseUrl() {
 
 const API_BASE_URL = resolveApiBaseUrl();
 
-const Api = (() => {
+const ApiService = (() => {
 
   // ── Token management ──────────────────────────────────────────────
   function getToken() {
@@ -126,134 +130,24 @@ const Api = (() => {
   const del    = (path)              => request('DELETE', path);
   const upload = (path, formData)    => request('POST',   path, formData, true);
 
-  // ── Utility: currency format ──────────────────────────────────────
-  const CURRENCY_LOCALE = {
-    ARS: 'es-AR',
-    USD: 'en-US',
-    EUR: 'es-ES',
-    BRL: 'pt-BR',
-    CLP: 'es-CL',
-    MXN: 'es-MX',
-    UYU: 'es-UY',
-    GBP: 'en-GB',
-  };
-
-  // Cache formatters per currency to avoid recreating Intl.NumberFormat on every call.
-  const _currencyFormatters = new Map();
-
-  function formatCurrency(amount) {
-    if (amount === null || amount === undefined) return '-';
-    const user = getUser();
-    const currency = user?.currency || 'ARS';
-    const locale = CURRENCY_LOCALE[currency] || 'es-AR';
-    const key = `${currency}-${locale}`;
-    let formatter = _currencyFormatters.get(key);
-    if (!formatter) {
-      formatter = new Intl.NumberFormat(locale, {
-        style: 'currency',
-        currency,
-        minimumFractionDigits: 2,
-      });
-      _currencyFormatters.set(key, formatter);
-    }
-    return formatter.format(amount);
-  }
-
-  // ── Utility: date format ──────────────────────────────────────────
-  function formatDate(dateStr) {
-    if (!dateStr) return '-';
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-  }
-
-  // ── Utility: relative date ────────────────────────────────────────
-  function formatRelativeDate(dateStr) {
-    if (!dateStr) return '-';
-    const d = new Date(dateStr);
-    const now = new Date();
-    const diff = Math.floor((now - d) / 86400000);
-    if (diff === 0) return 'Hoy';
-    if (diff === 1) return 'Ayer';
-    if (diff < 7) return `Hace ${diff} días`;
-    return formatDate(dateStr);
-  }
-
-  // ── Utility: category label map ───────────────────────────────────
-  const CATEGORY_LABELS = {
-    FOOD:          'Alimentacion',
-    TRANSPORT:     'Transporte',
-    ENTERTAINMENT: 'Entretenimiento',
-    HEALTH:        'Salud',
-    EDUCATION:     'Educacion',
-    CLOTHING:      'Ropa',
-    TECHNOLOGY:    'Tecnologia',
-    HOME:          'Hogar',
-    SERVICES:      'Servicios',
-    OTHER:         'Otros',
-  };
-
-  function categoryLabel(cat) {
-    return CATEGORY_LABELS[cat] || cat;
-  }
-
-  // ── Utility: category pill HTML ───────────────────────────────────
-  function categoryPill(cat) {
-    return `<span class="category-pill category-${cat}">${categoryLabel(cat)}</span>`;
-  }
-
-  // ── Utility: today's date for inputs ─────────────────────────────
-  function todayISO() {
-    return new Date().toISOString().split('T')[0];
-  }
-
-  // ── Utility: get initials from name ──────────────────────────────
-  function getInitials(name = '') {
-    return name
-      .split(' ')
-      .map((w) => w[0])
-      .slice(0, 2)
-      .join('')
-      .toUpperCase();
-  }
-
-  // ── Utility: HTML escaping ────────────────────────────────────────
-  function escapeHtml(str = '') {
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
-  }
-
-  // ── Show alert ────────────────────────────────────────────────────
-  function showAlert(elementId, message, type = 'error') {
-    const el = document.getElementById(elementId);
-    if (!el) return;
-    el.className = `alert alert-${type}`;
-    el.textContent = message;
-    el.classList.remove('hidden');
-
-    if (type === 'success') {
-      setTimeout(() => el.classList.add('hidden'), 4000);
-    }
-  }
-
-  function hideAlert(elementId) {
-    const el = document.getElementById(elementId);
-    if (el) el.classList.add('hidden');
-  }
-
   return {
     get, post, put, del, upload,
     getToken, saveToken, clearToken,
     saveUser, getUser,
-    formatCurrency, formatDate, formatRelativeDate,
-    categoryLabel, categoryPill, todayISO, getInitials,
-    escapeHtml,
-    showAlert, hideAlert,
     BASE_URL: API_BASE_URL,
   };
 })();
 
-window.Api = Api;
+window.ApiService = ApiService;
+
+// ── Fachada de compatibilidad hacia atrás ──────────────────────────
+// window.Api mantiene exactamente la misma superficie pública que antes
+// (Api.get, Api.formatCurrency, Api.escapeHtml, etc.) para no romper los
+// ~150 call-sites existentes en el resto del frontend. La lógica real ya
+// no vive en un solo archivo: HTTP en ApiService, formateo en FormatUtils,
+// DOM en DomUtils. Esta fachada solo compone los tres.
+window.Api = {
+  ...ApiService,
+  ...window.FormatUtils,
+  ...window.DomUtils,
+};
