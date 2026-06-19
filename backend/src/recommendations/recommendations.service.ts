@@ -2,12 +2,14 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateRecommendationDto } from './dto/create-recommendation.dto';
 import { ExpensesService } from '../expenses/expenses.service';
+import { FinancialRulesService } from '../shared/financial-rules.service';
 
 @Injectable()
 export class RecommendationsService {
   constructor(
     private prisma: PrismaService,
     private expensesService: ExpensesService,
+    private financialRules: FinancialRulesService,
   ) {}
 
   async create(advisorId: string, dto: CreateRecommendationDto) {
@@ -48,6 +50,11 @@ export class RecommendationsService {
   /**
    * Auto-generate recommendations based on spending patterns.
    * Called by advisor or on demand.
+   *
+   * El cálculo de cada condición (¿creció mucho el gasto?, ¿hay un gasto
+   * inusual?, etc.) vive en FinancialRulesService, compartido con
+   * NotificationsService. Acá solo se decide CÓMO redactar y categorizar
+   * cada señal como Recommendation (tipo + copy con emoji).
    */
   async autoGenerate(userId: string, advisorId: string) {
     const [analytics, patterns] = await Promise.all([
@@ -58,42 +65,44 @@ export class RecommendationsService {
     const recommendations: Array<{ message: string; type: string }> = [];
 
     // 1. Alert for high month-over-month growth
-    if (analytics.monthGrowth > 20) {
+    const growth = this.financialRules.evaluateMonthGrowth(analytics);
+    if (growth) {
       recommendations.push({
         type: 'ALERT',
-        message: `⚠️ Tu gasto mensual aumentó un ${analytics.monthGrowth.toFixed(1)}% respecto al mes anterior. Revisá tus gastos para identificar áreas de ahorro.`,
+        message: `⚠️ Tu gasto mensual aumentó un ${growth.data.growthPct.toFixed(1)}% respecto al mes anterior. Revisá tus gastos para identificar áreas de ahorro.`,
       });
     }
 
     // 2. Unusual expenses
-    if (analytics.unusualExpenses.length > 0) {
-      const top = analytics.unusualExpenses[0];
+    const unusual = this.financialRules.evaluateUnusualExpense(analytics);
+    if (unusual) {
       recommendations.push({
         type: 'ALERT',
-        message: `🔍 Se detectó un gasto inusualmente alto en "${top.merchant}" por $${top.amount.toFixed(2)}. Verificá si fue un gasto puntual o recurrente.`,
+        message: `🔍 Se detectó un gasto inusualmente alto en "${unusual.data.merchant}" por $${unusual.data.amount.toFixed(2)}. Verificá si fue un gasto puntual o recurrente.`,
       });
     }
 
     // 3. Top spending categories
-    if (analytics.byCategory.length > 0) {
-      const topCat = analytics.byCategory[0];
+    const topCategory = this.financialRules.evaluateTopCategory(analytics);
+    if (topCategory) {
       recommendations.push({
         type: 'PATTERN',
-        message: `📊 Tu mayor gasto se concentra en la categoría "${topCat.category}" ($${topCat.total.toFixed(2)}). Considerá establecer un presupuesto mensual para esta categoría.`,
+        message: `📊 Tu mayor gasto se concentra en la categoría "${topCategory.data.category}" ($${topCategory.data.total.toFixed(2)}). Considerá establecer un presupuesto mensual para esta categoría.`,
       });
     }
 
     // 4. Increasing category trends
-    const increasingTrends = patterns.trends?.filter((t) => t.trend === 'increasing') || [];
-    for (const trend of increasingTrends.slice(0, 2)) {
+    const increasingTrends = this.financialRules.evaluateIncreasingTrends(patterns, 2);
+    for (const trend of increasingTrends) {
       recommendations.push({
         type: 'SAVING',
-        message: `📈 Los gastos en "${trend.category}" aumentaron un ${trend.change.toFixed(1)}% respecto al mes anterior. Te recomendamos revisarlos para optimizar tu presupuesto.`,
+        message: `📈 Los gastos en "${trend.data.category}" aumentaron un ${trend.data.changePct.toFixed(1)}% respecto al mes anterior. Te recomendamos revisarlos para optimizar tu presupuesto.`,
       });
     }
 
     // 5. General savings tip if spending is above average
-    if (analytics.currentMonth.total > analytics.averageExpense * analytics.currentMonth.count * 1.2) {
+    const aboveAverage = this.financialRules.evaluateAboveAverageSpending(analytics, 1.2);
+    if (aboveAverage) {
       recommendations.push({
         type: 'SAVING',
         message: `💡 Tu gasto promedio este mes está por encima de tu historial. Intentá planificar los gastos grandes con anticipación.`,

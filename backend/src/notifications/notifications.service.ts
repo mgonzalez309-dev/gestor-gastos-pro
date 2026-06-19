@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ExpensesService } from '../expenses/expenses.service';
+import { FinancialRulesService } from '../shared/financial-rules.service';
 
 const NOTIFICATION_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 horas
 
@@ -9,6 +10,7 @@ export class NotificationsService {
   constructor(
     private prisma: PrismaService,
     private expensesService: ExpensesService,
+    private financialRules: FinancialRulesService,
   ) {}
 
   // ── CRUD ──────────────────────────────────────────────────────────
@@ -58,6 +60,10 @@ export class NotificationsService {
    * Analiza la situación financiera del usuario y genera notificaciones
    * relevantes. Evita duplicados usando un cooldown de 24 h por tipo.
    * Se llama desde el frontend al cargar el dashboard (sin scheduler externo).
+   *
+   * El cálculo de cada condición vive en FinancialRulesService, compartido
+   * con RecommendationsService. Acá solo se decide CÓMO redactar y
+   * categorizar cada señal como Notification (tipo + título + mensaje).
    */
   async generate(userId: string): Promise<number> {
     const [analytics, user] = await Promise.all([
@@ -76,62 +82,58 @@ export class NotificationsService {
     }> = [];
 
     // 1. Gasto mensual subió más del 20%
-    if (analytics.monthGrowth > 20) {
+    const growth = this.financialRules.evaluateMonthGrowth(analytics);
+    if (growth) {
       toCreate.push({
         type: 'MONTHLY_GROWTH',
         title: 'Gasto mensual en aumento',
-        message: `Tu gasto subió un ${analytics.monthGrowth.toFixed(1)}% respecto al mes anterior. Revisá tus gastos para identificar áreas de ahorro.`,
-        metadata: { monthGrowth: analytics.monthGrowth },
+        message: `Tu gasto subió un ${growth.data.growthPct.toFixed(1)}% respecto al mes anterior. Revisá tus gastos para identificar áreas de ahorro.`,
+        metadata: { monthGrowth: growth.data.growthPct },
       });
     }
 
     // 2. Gastos anómalos detectados (> 5x promedio)
-    if (analytics.unusualExpenses?.length > 0) {
-      const top = analytics.unusualExpenses[0];
+    const unusual = this.financialRules.evaluateUnusualExpense(analytics);
+    if (unusual) {
       toCreate.push({
         type: 'UNUSUAL_EXPENSE',
         title: 'Gasto inusualmente alto detectado',
-        message: `Se detectó un gasto de ${top.merchant} por $${top.amount.toFixed(2)} que es significativamente mayor a tu promedio.`,
-        metadata: { expenseId: top.id, merchant: top.merchant, amount: top.amount },
+        message: `Se detectó un gasto de ${unusual.data.merchant} por $${unusual.data.amount.toFixed(2)} que es significativamente mayor a tu promedio.`,
+        metadata: unusual.data,
       });
     }
 
     // 3. Riesgo de no llegar a la meta de ahorro
-    if (user?.monthlyIncome && user?.savingsGoal) {
-      const freeBudget = user.monthlyIncome - user.savingsGoal;
-      const spent = analytics.currentMonth?.total || 0;
-      const freeLeft = freeBudget - spent;
-
-      if (freeLeft < 0) {
-        toCreate.push({
-          type: 'SAVINGS_RISK',
-          title: '⚠️ Meta de ahorro en riesgo',
-          message: `Ya consumiste $${Math.abs(freeLeft).toFixed(2)} de tu meta de ahorro (${user.savingsGoal.toFixed(2)}) este mes.`,
-          metadata: { savingsGoal: user.savingsGoal, overspent: Math.abs(freeLeft) },
-        });
-      } else if (freeLeft < freeBudget * 0.15) {
-        toCreate.push({
-          type: 'SAVINGS_RISK',
-          title: 'Presupuesto libre casi agotado',
-          message: `Solo te quedan $${freeLeft.toFixed(2)} de presupuesto libre antes de afectar tu meta de ahorro.`,
-          metadata: { remaining: freeLeft, savingsGoal: user.savingsGoal },
-        });
-      }
+    const savingsRisk = this.financialRules.evaluateSavingsRisk(analytics, user || {});
+    if (savingsRisk) {
+      const { overBudget, freeLeft, savingsGoal } = savingsRisk.data;
+      toCreate.push(
+        overBudget
+          ? {
+              type: 'SAVINGS_RISK',
+              title: '⚠️ Meta de ahorro en riesgo',
+              message: `Ya consumiste $${Math.abs(freeLeft).toFixed(2)} de tu meta de ahorro (${savingsGoal.toFixed(2)}) este mes.`,
+              metadata: { savingsGoal, overspent: Math.abs(freeLeft) },
+            }
+          : {
+              type: 'SAVINGS_RISK',
+              title: 'Presupuesto libre casi agotado',
+              message: `Solo te quedan $${freeLeft.toFixed(2)} de presupuesto libre antes de afectar tu meta de ahorro.`,
+              metadata: { remaining: freeLeft, savingsGoal },
+            },
+      );
     }
 
     // 4. Presupuesto de categoría excedido
-    const budgets = (user?.categoryBudgets as Record<string, number>) || {};
-    for (const cat of analytics.byCategory || []) {
-      const limit = budgets[cat.category];
-      if (limit && limit > 0 && cat.total > limit) {
-        const excess = cat.total - limit;
-        toCreate.push({
-          type: 'BUDGET_ALERT',
-          title: `Presupuesto de ${cat.category} excedido`,
-          message: `Superaste el límite de $${limit.toFixed(2)} en ${cat.category} por $${excess.toFixed(2)} este mes.`,
-          metadata: { category: cat.category, budget: limit, spent: cat.total, excess },
-        });
-      }
+    const budgetExceeded = this.financialRules.evaluateBudgetExceeded(analytics, user || {});
+    for (const signal of budgetExceeded) {
+      const { category, budget, spent, excess } = signal.data;
+      toCreate.push({
+        type: 'BUDGET_ALERT',
+        title: `Presupuesto de ${category} excedido`,
+        message: `Superaste el límite de $${budget.toFixed(2)} en ${category} por $${excess.toFixed(2)} este mes.`,
+        metadata: { category, budget, spent, excess },
+      });
     }
 
     // 5. Positivo si todo está bien
