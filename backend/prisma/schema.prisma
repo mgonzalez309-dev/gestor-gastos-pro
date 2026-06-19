@@ -56,6 +56,7 @@ model User {
   receivedRecommendations Recommendation[] @relation("UserRecommendations")
   givenRecommendations    Recommendation[] @relation("AdvisorRecommendations")
   notifications          Notification[]
+  savingsGoals           SavingsGoal[]
 
   @@map("users")
 }
@@ -124,4 +125,22 @@ model Notification {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notifications")
+}
+
+// Meta de ahorro con objetivo y plazo (distinto del User.savingsGoal simple,
+// que es un monto mensual a reservar). Una SavingsGoal es algo como
+// "Ahorrar $1.000.000 en 6 meses" con seguimiento de progreso propio.
+model SavingsGoal {
+  id            String    @id @default(cuid())
+  userId        String    @map("user_id")
+  name          String                          // "Vacaciones", "Auto nuevo"
+  targetAmount  Float     @map("target_amount")  // monto objetivo
+  currentAmount Float     @default(0) @map("current_amount") // ahorrado hasta ahora hacia esta meta
+  targetDate    DateTime? @map("target_date")    // fecha límite opcional
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("savings_goals")
 }
