@@ -239,14 +239,14 @@ const Auth = (() => {
   function commandItems() {
     const user = Api.getUser();
     const items = [
-      { label: 'Dashboard', href: 'dashboard.html', tags: 'inicio resumen metricas' },
-      { label: 'Mis gastos', href: 'expenses.html', tags: 'tabla gastos movimientos' },
-      { label: 'Subir ticket', href: 'upload-ticket.html', tags: 'ocr ticket foto carga' },
-      { label: 'Mi perfil', href: 'profile.html', tags: 'usuario cuenta configuracion' },
+      { label: 'Dashboard', href: '/dashboard', tags: 'inicio resumen metricas' },
+      { label: 'Mis gastos', href: '/expenses', tags: 'tabla gastos movimientos' },
+      { label: 'Subir ticket', href: '/upload-ticket', tags: 'ocr ticket foto carga' },
+      { label: 'Mi perfil', href: '/profile', tags: 'usuario cuenta configuracion' },
     ];
 
     if (user?.role === 'ADVISOR') {
-      items.push({ label: 'Panel asesor', href: 'advisor.html', tags: 'asesor clientes recomendaciones' });
+      items.push({ label: 'Panel asesor', href: '/advisor', tags: 'asesor clientes recomendaciones' });
     }
 
     return items;
@@ -371,7 +371,7 @@ const Auth = (() => {
       } catch (err) {
         const isNotFound = err.message?.toLowerCase().includes('no encontramos');
         if (isNotFound) {
-          Api.showAlert(alertEl, `No encontramos una cuenta con ese correo. <a href="register.html" style="color:inherit;font-weight:600;text-decoration:underline;">Registrate gratis</a>.`, 'error');
+          Api.showAlert(alertEl, `No encontramos una cuenta con ese correo. <a href="/register" style="color:inherit;font-weight:600;text-decoration:underline;">Registrate gratis</a>.`, 'error');
         } else {
           Api.showAlert(alertEl, err.message, 'error');
         }
@@ -440,7 +440,7 @@ const Auth = (() => {
                             err.message?.toLowerCase().includes('conflict') ||
                             err.status === 409;
         if (isDuplicate) {
-          Api.showAlert(alertEl, `Ya existe una cuenta con ese correo. <a href="index.html" style="color:inherit;font-weight:600;text-decoration:underline;">Iniciá sesión</a>.`, 'error');
+          Api.showAlert(alertEl, `Ya existe una cuenta con ese correo. <a href="/login" style="color:inherit;font-weight:600;text-decoration:underline;">Iniciá sesión</a>.`, 'error');
         } else {
           Api.showAlert(alertEl, err.message, 'error');
         }

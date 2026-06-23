@@ -352,13 +352,13 @@
 
       // Quick action buttons
       document.getElementById('rs-btn-new-expense')?.addEventListener('click', () => {
-        window.location.href = 'expenses.html?new=1';
+        window.location.href = '/expenses?new=1';
       });
       document.getElementById('rs-btn-scan-ticket')?.addEventListener('click', () => {
-        window.location.href = 'upload-ticket.html';
+        window.location.href = '/upload-ticket';
       });
       document.getElementById('rs-btn-view-expenses')?.addEventListener('click', () => {
-        window.location.href = 'expenses.html';
+        window.location.href = '/expenses';
       });
 
       if (window.lucide) lucide.createIcons();

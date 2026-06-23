@@ -671,7 +671,7 @@ const Dashboard = (() => {
         container.innerHTML = `
           <div class="empty-state-sm">
             Aún no subiste tickets. 
-            <a href="upload-ticket.html" style="color:var(--color-primary)">Subir el primero</a>
+            <a href="/upload-ticket" style="color:var(--color-primary)">Subir el primero</a>
           </div>`;
         return;
       }
